@@ -12,7 +12,7 @@
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // --- Icon Components (inline SVG replacements for lucide-react) ---
         const CalendarIcon = ({ className }) => (
@@ -112,14 +112,63 @@
           const [currentDate, setCurrentDate] = useState(new Date());
           const [view, setView] = useState('calendar');
 
-          const [settings, setSettings] = useState({
-            cycleLength: 28,
-            periodLength: 5,
-            lutealLength: 14,
-            lastPeriodStart: formatDate(new Date(new Date().setDate(new Date().getDate() - 10))),
+          const [settings, setSettings] = useState(() => {
+            try {
+              const saved = localStorage.getItem('period_tracker_settings');
+              return saved ? JSON.parse(saved) : {
+                cycleLength: 28,
+                periodLength: 5,
+                lutealLength: 14,
+                lastPeriodStart: formatDate(new Date(new Date().setDate(new Date().getDate() - 10))),
+              };
+            } catch { return {
+              cycleLength: 28,
+              periodLength: 5,
+              lutealLength: 14,
+              lastPeriodStart: formatDate(new Date(new Date().setDate(new Date().getDate() - 10))),
+            }; }
           });
 
-          const [records, setRecords] = useState({});
+          const [records, setRecords] = useState(() => {
+            try {
+              const saved = localStorage.getItem('period_tracker_records');
+              return saved ? JSON.parse(saved) : {};
+            } catch { return {}; }
+          });
+
+          const [predictedSnapshots, setPredictedSnapshots] = useState(() => {
+            try {
+              const saved = localStorage.getItem('period_tracker_snapshots');
+              return saved ? JSON.parse(saved) : {};
+            } catch { return {}; }
+          });
+
+          // useRef 缓存快照，避免渲染中 setState 导致循环
+          const snapshotsRef = useRef(predictedSnapshots);
+          const snapshotsDirtyRef = useRef(false);
+
+          // 数据变更时自动保存到 localStorage
+          useEffect(() => {
+            localStorage.setItem('period_tracker_records', JSON.stringify(records));
+          }, [records]);
+
+          useEffect(() => {
+            localStorage.setItem('period_tracker_settings', JSON.stringify(settings));
+          }, [settings]);
+
+          useEffect(() => {
+            localStorage.setItem('period_tracker_snapshots', JSON.stringify(predictedSnapshots));
+            snapshotsRef.current = predictedSnapshots;
+          }, [predictedSnapshots]);
+
+          // 渲染完成后，如果有新快照产生，同步到 state
+          useEffect(() => {
+            if (snapshotsDirtyRef.current) {
+              snapshotsDirtyRef.current = false;
+              setPredictedSnapshots({ ...snapshotsRef.current });
+            }
+          });
+
           const [modalState, setModalState] = useState({ isOpen: false, dateStr: null });
 
           const getPhaseFromCycleDay = (dayOfCycle) => {
@@ -198,8 +247,30 @@
 
           const getDayData = (dateStr) => {
             const actualData = records[dateStr] || {};
-            const predictedPhase = calculatePredictedPhase(dateStr);
-            const predictedMood = predictMoodForPhase(predictedPhase);
+            const todayStr = formatDate(new Date());
+            const isHistorical = dateStr <= todayStr;
+
+            let predictedPhase;
+            let predictedMood;
+
+            if (isHistorical) {
+              // 历史/今天的日期：优先使用快照锁定的预测值
+              const snapshot = snapshotsRef.current[dateStr];
+              if (snapshot) {
+                predictedPhase = snapshot.predictedPhase;
+                predictedMood = snapshot.predictedMood;
+              } else {
+                // 首次访问，计算并存入快照缓存
+                predictedPhase = calculatePredictedPhase(dateStr);
+                predictedMood = predictMoodForPhase(predictedPhase);
+                snapshotsRef.current[dateStr] = { predictedPhase, predictedMood };
+                snapshotsDirtyRef.current = true;
+              }
+            } else {
+              // 未来日期：每次重新计算，不锁定
+              predictedPhase = calculatePredictedPhase(dateStr);
+              predictedMood = predictMoodForPhase(predictedPhase);
+            }
 
             return {
               dateStr,
@@ -208,7 +279,7 @@
               note: actualData.note || '',
               predictedPhase,
               predictedMood,
-              isFuture: parseDateStr(dateStr) > parseDateStr(formatDate(new Date())),
+              isFuture: !isHistorical,
             };
           };
 
