@@ -251,25 +251,21 @@
             const isHistorical = dateStr <= todayStr;
 
             let predictedPhase;
-            let predictedMood;
 
             if (isHistorical) {
               // 历史/今天的日期：优先使用快照锁定的预测值
               const snapshot = snapshotsRef.current[dateStr];
               if (snapshot) {
                 predictedPhase = snapshot.predictedPhase;
-                predictedMood = snapshot.predictedMood;
               } else {
                 // 首次访问，计算并存入快照缓存
                 predictedPhase = calculatePredictedPhase(dateStr);
-                predictedMood = predictMoodForPhase(predictedPhase);
-                snapshotsRef.current[dateStr] = { predictedPhase, predictedMood };
+                snapshotsRef.current[dateStr] = { predictedPhase };
                 snapshotsDirtyRef.current = true;
               }
             } else {
               // 未来日期：每次重新计算，不锁定
               predictedPhase = calculatePredictedPhase(dateStr);
-              predictedMood = predictMoodForPhase(predictedPhase);
             }
 
             return {
@@ -278,7 +274,7 @@
               actualMood: actualData.actualMood || null,
               note: actualData.note || '',
               predictedPhase,
-              predictedMood,
+              predictedMood: null,
               isFuture: !isHistorical,
             };
           };
@@ -306,16 +302,12 @@
               const dayData = getDayData(dateStr);
               const isToday = dateStr === todayStr;
 
-              const hasPhaseCorrection = dayData.actualPhase && dayData.actualPhase !== dayData.predictedPhase;
-              const hasMoodCorrection = dayData.actualMood && dayData.actualMood !== dayData.predictedMood;
-              const isSplit = hasPhaseCorrection || hasMoodCorrection;
+              const isSplit = dayData.actualPhase && dayData.actualPhase !== dayData.predictedPhase;
 
               const displayPhase = dayData.actualPhase || dayData.predictedPhase;
-              const isPredictedOnly = !dayData.actualPhase && !dayData.actualMood && !dayData.note;
+              const isPredictedOnly = !dayData.actualPhase;
 
-              const predictedMoodEmoji = Object.values(MOODS).find(m => m.label === dayData.predictedMood)?.emoji;
-              const actualMoodToUse = dayData.actualMood || dayData.predictedMood;
-              const actualMoodEmoji = Object.values(MOODS).find(m => m.label === actualMoodToUse)?.emoji;
+              const actualMoodEmoji = dayData.actualMood ? Object.values(MOODS).find(m => m.label === dayData.actualMood)?.emoji : null;
               const actualPhaseToUse = dayData.actualPhase || dayData.predictedPhase;
 
               const baseClasses = "relative flex flex-col overflow-hidden h-[85px] sm:h-[95px] border rounded-xl cursor-pointer transition-all hover:shadow-md";
@@ -327,6 +319,8 @@
                 const styles = PHASE_STYLES[displayPhase];
                 containerClasses = `${baseClasses} ${styles.bg} ${styles.text} ${styles.border} ${isPredictedOnly ? 'opacity-90 border-dashed border-gray-300' : 'border-solid shadow-sm border-[1.5px]'} ${isToday ? 'ring-2 ring-pink-500 ring-offset-2' : ''}`;
               }
+              // isPredictedOnly means no actualPhase set - uses dashed border, lower opacity
+              // If actualPhase is set (even same as predicted) - solid border, full opacity
 
               days.push(
                 <div key={dateStr} onClick={() => setModalState({ isOpen: true, dateStr })} className={containerClasses}>
@@ -348,19 +342,18 @@
                     <div className="flex-1 flex w-full h-full pt-[18px] sm:pt-[20px]">
                       <div className={`w-1/2 h-full flex flex-col items-center justify-end pb-1 sm:pb-1.5 border-r border-gray-100 relative ${PHASE_STYLES[dayData.predictedPhase].bg} ${PHASE_STYLES[dayData.predictedPhase].text} opacity-90`}>
                          <div className="absolute top-1 left-1/2 -translate-x-1/2 bg-white/70 text-[8px] px-1 rounded text-gray-500 font-medium shadow-sm">预</div>
-                         <span className="text-sm sm:text-base mb-0.5 drop-shadow-sm">{predictedMoodEmoji}</span>
                          <span className="text-[9px] sm:text-[10px] scale-90 whitespace-nowrap opacity-90">{dayData.predictedPhase}</span>
                       </div>
                       <div className={`w-1/2 h-full flex flex-col items-center justify-end pb-1 sm:pb-1.5 relative ${PHASE_STYLES[actualPhaseToUse].bg} ${PHASE_STYLES[actualPhaseToUse].text}`}>
                          <div className="absolute top-1 left-1/2 -translate-x-1/2 bg-white/90 text-[8px] px-1 rounded text-pink-600 font-bold shadow-sm">实</div>
-                         <span className="text-base sm:text-lg mb-0.5 drop-shadow-sm scale-110">{actualMoodEmoji}</span>
+                         {actualMoodEmoji && <span className="text-base sm:text-lg mb-0.5 drop-shadow-sm scale-110">{actualMoodEmoji}</span>}
                          <span className="text-[9px] sm:text-[10px] font-bold whitespace-nowrap">{actualPhaseToUse}</span>
                       </div>
                     </div>
                   ) : (
                     <>
                       <div className="flex-1 w-full flex items-center justify-center mt-3 sm:mt-4">
-                        <span className={`text-base sm:text-xl ${isPredictedOnly ? 'opacity-80' : 'drop-shadow-sm'}`}>{actualMoodEmoji}</span>
+                        {actualMoodEmoji && <span className="text-base sm:text-xl drop-shadow-sm">{actualMoodEmoji}</span>}
                       </div>
                       <div className="w-full h-6 flex items-center justify-center pb-1">
                         <span className={`text-[10px] sm:text-xs whitespace-nowrap ${isPredictedOnly ? 'text-gray-600' : 'font-bold text-gray-800'}`}>
@@ -431,7 +424,7 @@
 
                       <div className="text-sm font-semibold text-gray-700 mt-2">界面标记图例：</div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm text-gray-600">
-                        <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border border-gray-300 border-dashed"></div>虚线框代表全部为AI预测</div>
+                        <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border border-gray-300 border-dashed"></div>虚线框代表仅有AI预测(未手动确认)</div>
                         <div className="flex items-center gap-1.5">
                           <div className="bg-gray-100 rounded-full p-0.5"><FileText className="w-2.5 h-2.5 text-gray-500" /></div>代表有文字备注
                         </div>
@@ -526,12 +519,6 @@
                         <span className="text-gray-600 font-medium">生理期状态</span>
                         <span className={`px-2 py-0.5 rounded text-xs font-bold ${PHASE_STYLES[dayData.predictedPhase].bg} ${PHASE_STYLES[dayData.predictedPhase].text}`}>
                           {dayData.predictedPhase}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center bg-white/60 px-3 py-2 rounded-lg">
-                        <span className="text-gray-600 font-medium">当日心情</span>
-                        <span className="font-medium text-gray-800">
-                          {Object.values(MOODS).find(m => m.label === dayData.predictedMood)?.emoji} {dayData.predictedMood}
                         </span>
                       </div>
                     </div>
