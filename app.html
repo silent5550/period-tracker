@@ -158,7 +158,6 @@
 
           useEffect(() => {
             localStorage.setItem('period_tracker_snapshots', JSON.stringify(predictedSnapshots));
-            snapshotsRef.current = predictedSnapshots;
           }, [predictedSnapshots]);
 
           // 渲染完成后，如果有新快照产生，同步到 state
