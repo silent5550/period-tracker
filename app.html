@@ -279,6 +279,13 @@
             };
           };
 
+          const clearSnapshots = () => {
+            snapshotsRef.current = {};
+            snapshotsDirtyRef.current = false;
+            setPredictedSnapshots({});
+            localStorage.removeItem('period_tracker_snapshots');
+          };
+
           const handleSaveRecord = (dateStr, data) => {
             setRecords(prev => ({ ...prev, [dateStr]: data }));
             setModalState({ isOpen: false, dateStr: null });
@@ -439,7 +446,7 @@
                     </div>
                   </div>
                 ) : (
-                  <SettingsView settings={settings} setSettings={setSettings} setView={setView} />
+                  <SettingsView settings={settings} setSettings={setSettings} setView={setView} clearSnapshots={clearSnapshots} setRecords={setRecords} />
                 )}
               </main>
 
@@ -456,8 +463,19 @@
         }
 
         // --- 组件：周期设置视图 ---
-        function SettingsView({ settings, setSettings, setView }) {
+        function SettingsView({ settings, setSettings, setView, clearSnapshots, setRecords }) {
           const [localSettings, setLocalSettings] = useState(settings);
+
+          const handleResetAll = () => {
+            if (!confirm('⚠️ 确定要重置所有数据吗？\n\n此操作将清除所有记录、设置和预测快照，且不可恢复！')) return;
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('period_tracker_')) keys.push(key);
+            }
+            keys.forEach(k => localStorage.removeItem(k));
+            location.reload();
+          };
 
           return (
             <div className="bg-white rounded-2xl shadow-sm p-6 max-w-md mx-auto">
@@ -484,9 +502,17 @@
                   <label className="block text-sm font-medium text-gray-700 mb-1">系统初始基准日 (最近一次月经)</label>
                   <input type="date" value={localSettings.lastPeriodStart} onChange={(e) => setLocalSettings({...localSettings, lastPeriodStart: e.target.value})} className="w-full rounded-lg bg-gray-50 border-transparent focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 p-2.5 outline-none transition-all" />
                 </div>
-                <button onClick={() => { setSettings(localSettings); setView('calendar'); }} className="w-full mt-6 bg-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-pink-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <button onClick={() => { clearSnapshots(); setSettings(localSettings); setView('calendar'); }} className="w-full mt-6 bg-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-pink-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                   <Check className="w-5 h-5" /> 保存并返回
                 </button>
+              </div>
+
+              <div className="mt-10 pt-6 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-500 mb-3">危险操作</h3>
+                <button onClick={handleResetAll} className="w-full bg-red-50 text-red-600 py-3 px-4 rounded-xl font-medium border-2 border-red-200 hover:bg-red-100 hover:border-red-300 active:scale-[0.98] transition-all">
+                  🗑️ 重置所有数据
+                </button>
+                <p className="text-xs text-gray-400 mt-2 text-center">此操作将清除所有记录、设置和预测数据，不可恢复</p>
               </div>
             </div>
           );
