@@ -961,7 +961,7 @@ function ApiUpstreamDrawerContent() {
 // 6. Core Views
 // ==========================================
 function StatsView() {
-  const { providers, apis, consumers, relations } = useContext(AppContext);
+  const { providers, apis, consumers, relations, navigateToApiList } = useContext(AppContext);
   const w = 240, h = 60;
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50 overflow-auto">
@@ -986,8 +986,8 @@ function StatsView() {
           const areaPoints = `0,${h} ${points} ${w},${h}`;
           const strokeColor = '#3b82f6';
           return (
-            <div key={provider.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
-              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><div className="font-bold text-slate-800 text-base">{provider.name}</div><OwnerBadge name={provider.owner} /></div>
+            <div key={provider.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col cursor-pointer hover:shadow-md hover:border-blue-300 hover:-translate-y-0.5 transition-all duration-200" onClick={() => navigateToApiList(provider.id)} title={`点击查看「${provider.name}」域的接口清单`}>
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><div className="font-bold text-slate-800 text-base flex items-center">{provider.name}<ArrowUpRight size={14} className="ml-1.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" /></div><OwnerBadge name={provider.owner} /></div>
               <div className="p-5 flex-1">
                 <div className="grid grid-cols-3 gap-4 text-center mb-6">
                   <div><div className="text-xl font-bold text-slate-800">{domainApis.length}</div><div className="text-xs text-slate-500 mt-1">接口数量</div></div>
@@ -1012,12 +1012,20 @@ function StatsView() {
 }
 
 function ApiTableView() {
-  const { apis, providers, globalSearch, setIsRegisterModalOpen, openDrawer } = useContext(AppContext);
+  const { apis, providers, globalSearch, setIsRegisterModalOpen, openDrawer, pendingApiFilter, setPendingApiFilter } = useContext(AppContext);
   const [filterDomain, setFilterDomain] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterFuzzy, setFilterFuzzy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  useEffect(() => {
+    if (pendingApiFilter) {
+      setFilterDomain(pendingApiFilter);
+      setFilterStatus('');
+      setFilterFuzzy('');
+      setPendingApiFilter(null);
+    }
+  }, [pendingApiFilter]);
   useEffect(() => { setCurrentPage(1); }, [globalSearch, filterDomain, filterStatus, filterFuzzy]);
   let filteredData = apis;
   if (globalSearch) filteredData = filteredData.filter(item => item.name.includes(globalSearch) || item.desc.includes(globalSearch) || item.id.includes(globalSearch));
@@ -1357,11 +1365,13 @@ function App() {
   const [editingConsumer, setEditingConsumer] = useState(null);
   const [isAppDepsModalOpen, setIsAppDepsModalOpen] = useState(false);
   const [depsConsumerId, setDepsConsumerId] = useState(null);
+  const [pendingApiFilter, setPendingApiFilter] = useState(null);
   const showToast = (message, type = 'success') => { setToast({ show: true, message, type }); setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500); };
   const openDrawer = (type, id) => { setDrawerType(type); setSelectedId(id); setDrawerOpen(true); };
   const openApplyModal = (consumerId) => { setApplyConsumerId(consumerId); setIsApplyModalOpen(true); };
   const openConsumerModal = (consumer = null) => { setEditingConsumer(consumer); setIsConsumerModalOpen(true); };
   const openAppDepsModal = (consumerId) => { setDepsConsumerId(consumerId); setIsAppDepsModalOpen(true); };
+  const navigateToApiList = (providerId) => { setPendingApiFilter(providerId); setActiveMenu('apis'); };
   const ctx = {
     activeMenu, setActiveMenu, globalSearch, setGlobalSearch, currentUser, setCurrentUser,
     providers, setProviders, apis, setApis, consumers, setConsumers, relations, setRelations, requests, setRequests,
@@ -1372,6 +1382,7 @@ function App() {
     isAppServiceModalOpen, setIsAppServiceModalOpen, editingAppService, setEditingAppService,
     isConsumerModalOpen, setIsConsumerModalOpen, editingConsumer, setEditingConsumer,
     isAppDepsModalOpen, setIsAppDepsModalOpen, depsConsumerId, setDepsConsumerId, openAppDepsModal,
+    pendingApiFilter, setPendingApiFilter, navigateToApiList,
     showToast, openDrawer, openApplyModal, openConsumerModal
   };
   return (
