@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全域系统能力地图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    <script type="text/babel">
+const { useState, useEffect, useRef, createContext, useContext } = React;
+
+// ==========================================
+// Lucide Icon Components (inline SVG)
+// ==========================================
+const Search = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+);
+const Box = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+);
+const Users = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+);
+const Link2 = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+);
+const AlertCircle = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+);
+const ChevronRight = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>
+);
+const Database = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+);
+const Globe = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+);
+const LayoutGrid = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+);
+const X = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+);
+const FileText = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+);
+const ArrowUpRight = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+);
+const BarChart3 = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+);
+const Network = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>
+);
+const LinkIcon = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+);
+const Filter = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+);
+const Download = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+);
+const Code2 = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+);
+const Activity = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+);
+const ArrowLeft = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+);
+const Clock = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+);
+const Server = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+);
+const CheckCircle2 = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+);
+const XCircle = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+);
+const Plus = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+);
+const Upload = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+);
+const FileSpreadsheet = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>
+);
+const KeyRound = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+);
+const Eye = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+const EyeOff = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+);
+const PlusCircle = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+);
+const Layers = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+);
+const Info = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+);
+const PieChart = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+);
+const ChevronLeft = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m15 18-6-6 6-6"/></svg>
+);
+const AppWindow = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+);
+const Edit = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+);
+const Trash2 = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+);
+const HelpCircle = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+);
+const ShieldCheck = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+);
+const ClipboardList = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+);
+const Check = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 6 9 17l-5-5"/></svg>
+);
+const Ban = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+);
+const Waypoints = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="4.5" r="2.5"/><path d="m10.2 6.3-3.9 3.9"/><circle cx="4.5" cy="12" r="2.5"/><path d="M7 12h10"/><circle cx="19.5" cy="12" r="2.5"/><path d="m13.8 17.7 3.9-3.9"/><circle cx="12" cy="19.5" r="2.5"/></svg>
+);
+const ExternalLink = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+);
+
+// ==========================================
+// 1. Mock Data
+// ==========================================
+const MOCK_DOMAIN_OWNERS = ['姜杰', '汪翔', '肖浩', '孙业', '包明天', '肖海杰', '张涛', '李托托', '董阮琛'];
+const MOCK_SYSTEM_ACCOUNTS = ['sys_algo_01', 'sys_customer_01', 'sys_security_01', 'sys_qts_01', 'sys_order_01', 'sys_merchant_01', 'sys_item_01'];
+const MOCK_HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'MQ'];
+
+const INITIAL_PROVIDERS = [
+  { id: 'p_algo', name: '算法', owner: '姜杰、董阮琛', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  { id: 'p_customer', name: '客户', owner: '汪翔', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 'p_security', name: '安全', owner: '肖浩', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+  { id: 'p_qts', name: 'QTS', owner: '孙业', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 'p_order', name: '订单', owner: '包明天', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  { id: 'p_merchant', name: '商家', owner: '肖海杰', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  { id: 'p_item', name: '商品', owner: '张涛', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+];
+
+const INITIAL_APIS = [
+  { id: 'API_10001', providerId: 'p_algo', name: '类目预测（含物料组）', publicDomain: 'ailab-category.zkh360.com', url: '/category/predict', method: 'POST', version: 'V1', domainOwner: '姜杰', owner: '董阮琛', status: '已上线', desc: '类目预测综合服务，底层依赖QTS模型和商品档案' },
+  { id: 'API_10002', providerId: 'p_customer', name: '获取地址信息', publicDomain: 'api-platform.zkh360.com', url: '/v2/area/{code}', method: 'GET', version: 'V1', domainOwner: '汪翔', owner: '汪翔', status: '已上线', desc: '按编码获取省市区级联地址信息' },
+  { id: 'API_10003', providerId: 'p_algo', name: '类目预测(纯核心)', publicDomain: 'ailab-category.zkh360.com', url: '/qts/predict', method: 'POST', version: 'V1', domainOwner: '姜杰', owner: '董阮琛', status: '已上线', desc: '类目预测基础核心算法模型调用' },
+  { id: 'API_10004', providerId: 'p_security', name: '登录认证', publicDomain: 'auth.zkh360.com', url: '/server/oauth/token', method: 'POST', version: 'V1', domainOwner: '肖浩', owner: '肖浩', status: '已上线', desc: '全局统一登录校验鉴权接口' },
+  { id: 'API_10005', providerId: 'p_qts', name: '算法异步结果通知MQ', publicDomain: 'MQ_INST_1602027139', url: 'intelligence_result_qts', method: 'MQ', version: 'V1', domainOwner: '孙业', owner: '孙业', status: '已上线', desc: '算法异步识别结果的消费队列' },
+  { id: 'API_10006', providerId: 'p_order', name: '查询送货清单', publicDomain: 'zkh-oms.zkh360.com', url: '/vendor/delivery/query/v2', method: 'POST', version: 'V1', domainOwner: '包明天', owner: '包明天', status: '已上线', desc: '查询订单的履约送货清单，底层依赖商品和客户基础信息' },
+  { id: 'API_10008', providerId: 'p_customer', name: '客户基础档案查询', publicDomain: 'zkh-customer.zkh360.com', url: '/customers/base/{id}', method: 'GET', version: 'V1', domainOwner: '汪翔', owner: '汪翔', status: '已上线', desc: '底层基础客户信息查询' },
+  { id: 'API_10009', providerId: 'p_item', name: '商品详情-SKU', publicDomain: 'cc-gateway.zkh360.com', url: '/api/cc/v1/sku/detail', method: 'GET', version: 'V1', domainOwner: '张涛', owner: '张涛', status: '已上线', desc: '底层商品核心档案查询接口' },
+  { id: 'API_10010', providerId: 'p_item', name: '商品销售价格查询', publicDomain: 'cc-gateway.zkh360.com', url: '/api/sp/v1/companysaleprice', method: 'POST', version: 'V1', domainOwner: '张涛', owner: '张涛', status: '已上线', desc: '底层商品分公司销售指导价查询' },
+];
+
+const INITIAL_API_DEPENDENCIES = [
+  { callerId: 'API_10001', calleeId: 'API_10003' },
+  { callerId: 'API_10001', calleeId: 'API_10005' },
+  { callerId: 'API_10003', calleeId: 'API_10009' },
+  { callerId: 'API_10006', calleeId: 'API_10008' },
+  { callerId: 'API_10006', calleeId: 'API_10009' },
+  { callerId: 'API_10006', calleeId: 'API_10010' },
+  { callerId: 'API_10010', calleeId: 'API_10009' },
+];
+
+const INITIAL_CONSUMERS = [
+  { id: 'APP_2001', domain: 'QTS', scenario: '智能匹配中台服务', serviceName: 'zkh-qts-apr-search-pro', domainOwner: '孙业', owner: '孙业', systemAccount: 'sys_qts_01', gateway: 'gw-inner.zkh360.com', createTime: '2023-01-12', appKey: 'ak_8f9a2b3c', appSecret: 'sk_1e2f3a4b5c6d', enabled: true },
+  { id: 'APP_2002', domain: '商家', scenario: 'VC档案', serviceName: 'zkh-pms-supplier-pro', domainOwner: '肖海杰', owner: '肖海杰', systemAccount: 'sys_merchant_01', gateway: 'gw-outer.zkh360.com', createTime: '2023-03-05', appKey: 'ak_2b3c4d5e', appSecret: 'sk_5e6f7a8b9c0d', enabled: true },
+  { id: 'APP_2003', domain: '商家', scenario: 'VC基础服务', serviceName: 'zkh-vc-system-pro', domainOwner: '肖海杰', owner: '肖海杰', systemAccount: 'sys_merchant_01', gateway: 'gw-outer.zkh360.com', createTime: '2023-03-08', appKey: 'ak_5c6d7e8f', appSecret: 'sk_9c0d1e2f3a4b', enabled: true },
+  { id: 'APP_2004', domain: 'QTS', scenario: '竞价后台', serviceName: 'zkh-qts-bid-service-pro', domainOwner: '孙业', owner: '孙业', systemAccount: 'sys_qts_01', gateway: 'gw-inner.zkh360.com', createTime: '2023-04-11', appKey: 'ak_1a2b3c4d', appSecret: 'sk_d5e6f7a8b9c0', enabled: true },
+  { id: 'APP_2005', domain: '大数据', scenario: '订单全流程', serviceName: 'zkh-bi-order-tracking-pro', domainOwner: '李托托', owner: '李托托', systemAccount: 'sys_data_01', gateway: 'gw-inner.zkh360.com', createTime: '2023-06-22', appKey: 'ak_9f8e7d6c', appSecret: 'sk_4b3a2f1e0d9c', enabled: true },
+];
+
+const INITIAL_APP_SERVICES = [
+  { id: 'SVC_001', serviceName: 'zkh-qts-apr-search-pro', domain: 'QTS', publicDomain: 'qts.zkh360.com', innerDomain: 'qts.inner.local', domainOwner: '孙业', owner: '孙业', swaggerUrl: 'http://qts/swagger-ui.html', swaggerUser: 'admin', swaggerPwd: '123', enabled: true },
+  { id: 'SVC_002', serviceName: 'zkh-pms-supplier-pro', domain: '商家', publicDomain: 'pms.zkh360.com', innerDomain: 'pms.inner.local', domainOwner: '肖海杰', owner: '肖海杰', swaggerUrl: 'http://pms/swagger-ui.html', swaggerUser: 'admin', swaggerPwd: '123', enabled: true },
+  { id: 'SVC_003', serviceName: 'zkh-bi-order-tracking-pro', domain: '大数据', publicDomain: 'bi.zkh360.com', innerDomain: 'bi.inner.local', domainOwner: '李托托', owner: '李托托', swaggerUrl: 'http://bi/swagger-ui.html', swaggerUser: 'admin', swaggerPwd: '123', enabled: true },
+];
+
+const INITIAL_RELATIONS = [
+  { apiId: 'API_10001', consumerId: 'APP_2001' },
+  { apiId: 'API_10002', consumerId: 'APP_2002' },
+  { apiId: 'API_10003', consumerId: 'APP_2001' },
+  { apiId: 'API_10004', consumerId: 'APP_2001' },
+  { apiId: 'API_10005', consumerId: 'APP_2001' },
+  { apiId: 'API_10006', consumerId: 'APP_2005' },
+];
+
+const INITIAL_REQUESTS = [
+  { id: 'REQ_30001', apiId: 'API_10006', consumerId: 'APP_2004', applicant: '孙业', status: '待审批', createTime: '2023-10-25', approveTime: '-', systemAccount: 'sys_qts_01' },
+  { id: 'REQ_30002', apiId: 'API_10001', consumerId: 'APP_2002', applicant: '肖海杰', status: '已通过', createTime: '2023-10-20', approveTime: '2023-10-21', systemAccount: 'sys_merchant_01' },
+  { id: 'REQ_30003', apiId: 'API_10004', consumerId: 'APP_2005', applicant: '李托托', status: '已驳回', createTime: '2023-10-22', approveTime: '2023-10-23', systemAccount: 'sys_data_01' },
+  { id: 'REQ_30004', apiId: 'API_10009', consumerId: 'APP_2001', applicant: '孙业', status: '已通过', createTime: '2023-10-26', approveTime: '2023-10-26', systemAccount: 'sys_qts_01' },
+  { id: 'REQ_30005', apiId: 'API_10002', consumerId: 'APP_2005', applicant: '李托托', status: '待审批', createTime: '2023-10-27', approveTime: '-', systemAccount: 'sys_data_01' },
+];
+
+// ==========================================
+// 2. Context
+// ==========================================
+const AppContext = createContext({});
+
+// ==========================================
+// 3. Reusable Components
+// ==========================================
+function OwnerBadge({ name }) {
+  const colors = [
+    'bg-blue-50 text-blue-700 border-blue-200', 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'bg-indigo-50 text-indigo-700 border-indigo-200', 'bg-orange-50 text-orange-700 border-orange-200',
+    'bg-rose-50 text-rose-700 border-rose-200', 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    'bg-purple-50 text-purple-700 border-purple-200'
+  ];
+  let hash = 0;
+  if (name) {
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colorClass = colors[Math.abs(hash) % colors.length];
+  return (
+    <div className={`inline-flex items-center px-2 py-1 rounded border ${colorClass} text-xs font-medium whitespace-nowrap`}>
+      <div className="w-4 h-4 rounded-full bg-white/60 flex items-center justify-center mr-1.5 shadow-sm text-[10px] font-bold">
+        {name ? name.charAt(0) : '?'}
+      </div>
+      {name || '未知'}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const styles = {
+    '已上线': 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    '开发中': 'bg-blue-50 text-blue-600 border-blue-200',
+    '已废弃': 'bg-slate-100 text-slate-500 border-slate-200',
+    '规划中': 'bg-orange-50 text-orange-600 border-orange-200'
+  };
+  return <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
+}
+
+function RequestStatusBadge({ status }) {
+  const styles = {
+    '待审批': 'bg-orange-50 text-orange-600 border-orange-200',
+    '已通过': 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    '已驳回': 'bg-rose-50 text-rose-600 border-rose-200',
+    '已撤销': 'bg-slate-100 text-slate-600 border-slate-200'
+  };
+  return <span className={`px-2 py-1 rounded text-xs font-bold border ${styles[status] || 'bg-slate-100'}`}>{status}</span>;
+}
+
+function MethodBadge({ method }) {
+  const styles = {
+    'GET': 'bg-emerald-100 text-emerald-700',
+    'POST': 'bg-blue-100 text-blue-700',
+    'PUT': 'bg-orange-100 text-orange-700',
+    'DELETE': 'bg-rose-100 text-rose-700',
+    'PATCH': 'bg-purple-100 text-purple-700',
+    'MQ': 'bg-cyan-100 text-cyan-700'
+  };
+  const color = styles[method?.toUpperCase()] || 'bg-slate-100 text-slate-700';
+  return (
+    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${color}`}>
+      {method || '未知'}
+    </span>
+  );
+}
+
+function TokenCell({ consumer }) {
+  const { currentUser } = useContext(AppContext);
+  const [show, setShow] = useState(false);
+  const isOwner = consumer.owner === currentUser || currentUser.includes('架构师');
+
+  if (!isOwner) {
+    return (
+      <div className="text-xs font-mono text-slate-400 bg-slate-50 border border-slate-100 p-1.5 rounded inline-block w-48 truncate" title="仅申请人可见">
+        <KeyRound size={12} className="inline mr-1" /> ***************
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center space-x-2">
+      <div className="text-[11px] font-mono text-slate-600 bg-slate-100 border border-slate-200 p-1.5 rounded shadow-inner min-w-[160px]">
+        {show ? (
+          <div><div className="text-indigo-600"><span className="text-slate-400">AK:</span> {consumer.appKey}</div><div className="text-emerald-600 mt-0.5"><span className="text-slate-400">SK:</span> {consumer.appSecret}</div></div>
+        ) : (
+          <div><div><span className="text-slate-400">AK:</span> ********</div><div className="mt-0.5"><span className="text-slate-400">SK:</span> ********</div></div>
+        )}
+      </div>
+      <button type="button" onClick={() => setShow(!show)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title={show ? "隐藏" : "显示明文"}>
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
+}
+
+function Pagination({ total, current, pageSize, onChange }) {
+  const pages = Math.ceil(total / pageSize) || 1;
+  if (total === 0) return null;
+  return (
+    <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 bg-white sticky bottom-0 z-10">
+      <div className="text-sm text-slate-500">共 <span className="font-semibold text-slate-700 mx-1">{total}</span> 条记录</div>
+      <div className="flex items-center space-x-2">
+        <button type="button" disabled={current <= 1} onClick={() => onChange(current - 1)} className="p-1.5 rounded bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><ChevronLeft size={16} /></button>
+        <span className="text-sm text-slate-600 px-3 font-medium">{current} <span className="text-slate-400 font-normal mx-1">/</span> {pages}</span>
+        <button type="button" disabled={current >= pages} onClick={() => onChange(current + 1)} className="p-1.5 rounded bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><ChevronRight size={16} /></button>
+      </div>
+    </div>
+  );
+}
+
+function Drawer({ isOpen, onClose, title, subtitle, icon, children }) {
+  if (!isOpen) return null;
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-40 transition-opacity" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 w-[850px] bg-white shadow-2xl z-50 transform transition-transform flex flex-col border-l border-slate-200">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">{icon}</div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+              {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"><X size={20} /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 relative">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ToggleSwitch({ enabled, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${enabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+    >
+      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+    </button>
+  );
+}
+
+const handleDocClick = () => {
+  window.open('https://product-center-uat.zkh360.com/swagger-ui.html#!/21830216972638121153NEW/batchBangbangPreferredProductByBrandAndProductGroupsUsingPOST', '_blank');
+};
+
+function parseCSV(text) {
+  let ret = [], currentRow = [], inQuote = false, value = '';
+  for (let i = 0; i < text.length; i++) {
+    let ch = text[i]; let nextCh = text[i+1];
+    if (inQuote) {
+      if (ch === '"') {
+        if (nextCh === '"') { value += '"'; i++; } else { inQuote = false; }
+      } else { value += ch; }
+    } else {
+      if (ch === '"') { inQuote = true; } 
+      else if (ch === ',') { currentRow.push(value); value = ''; } 
+      else if (ch === '\n' || ch === '\r') {
+        currentRow.push(value); ret.push(currentRow); currentRow = []; value = '';
+        if (ch === '\r' && nextCh === '\n') i++; 
+      } else { value += ch; }
+    }
+  }
+  if (value !== '' || currentRow.length > 0) { currentRow.push(value); ret.push(currentRow); }
+  return ret;
+}
+
+function TrendChart({ data }) {
+  const w = 700, h = 160;
+  const maxCount = Math.max(...data.map(d => d.count)) * 1.2 || 1;
+  const points = data.map((d, i) => `${(i / (data.length - 1 || 1)) * w},${h - (d.count / maxCount) * h}`).join(' ');
+  const areaPoints = `0,${h} ${points} ${w},${h}`;
+  return (
+    <div className="w-full relative mt-8">
+      <svg viewBox={`0 -20 ${w} ${h + 20}`} className="w-full h-48 overflow-visible">
+        <defs><linearGradient id="chartGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" /><stop offset="100%" stopColor="#6366f1" stopOpacity="0" /></linearGradient></defs>
+        <polygon points={areaPoints} fill="url(#chartGrad)" />
+        <polyline points={points} fill="none" stroke="#6366f1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {data.map((d, i) => (
+          <g key={i} className="group relative cursor-pointer">
+            <circle cx={(i / (data.length - 1 || 1)) * w} cy={h - (d.count / maxCount) * h} r="4" fill="#fff" stroke="#6366f1" strokeWidth="2.5" className="group-hover:r-[6px] transition-all duration-200" />
+            <text x={(i / (data.length - 1 || 1)) * w} y={h - (d.count / maxCount) * h - 14} textAnchor="middle" className="text-[10px] fill-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none font-bold">{d.count}</text>
+          </g>
+        ))}
+      </svg>
+      <div className="relative mt-2 text-xs text-slate-500 font-mono h-5">{data.filter(d => d.date).map((d, i) => {
+        const origIdx = data.indexOf(d);
+        const leftPct = (origIdx / (data.length - 1 || 1)) * 100;
+        return <div key={i} style={{position: 'absolute', left: `${leftPct}%`, transform: 'translateX(-50%)'}} className="text-center">{d.date}</div>;
+      })}</div>
+    </div>
+  );
+}
+
+function LogTable({ logs }) {
+  if (!logs || logs.length === 0) return <div className="p-6 text-center text-slate-500">暂无明细数据</div>;
+  return (
+    <table className="w-full text-left text-sm">
+      <thead className="bg-white border-b border-slate-100"><tr><th className="px-5 py-3 font-semibold text-slate-600">调用时间</th><th className="px-5 py-3 font-semibold text-slate-600">调用服务</th><th className="px-5 py-3 font-semibold text-slate-600">耗时</th><th className="px-5 py-3 font-semibold text-slate-600">状态</th><th className="px-5 py-3 font-semibold text-slate-600">调用人</th></tr></thead>
+      <tbody className="divide-y divide-slate-100 bg-white">
+        {logs.map(log => (
+          <tr key={log.id} className="hover:bg-slate-50"><td className="px-5 py-3 text-slate-500 font-mono text-xs flex items-center"><Clock size={12} className="mr-1.5"/> {log.time}</td><td className="px-5 py-3 font-mono text-slate-600 text-xs">{log.service}</td><td className="px-5 py-3 text-slate-600 text-xs">{log.duration} ms</td><td className="px-5 py-3">{log.status === 200 ? <span className="flex items-center text-emerald-600 text-xs font-medium"><CheckCircle2 size={14} className="mr-1"/> 成功</span> : <span className="flex items-center text-rose-600 text-xs font-medium"><XCircle size={14} className="mr-1"/> 异常</span>}</td><td className="px-5 py-3"><OwnerBadge name={log.caller} /></td></tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function CallMonitorPanel({ consumer, apiName, onBack }) {
+  if (!consumer) return null;
+  // Generate 90 days of trend data
+  const chartData = Array.from({length: 90}).map((_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (89 - i));
+    const weekNum = Math.floor(i / 7) + 1;
+    const showLabel = i % 7 === 0;
+    return { date: showLabel ? `W${weekNum}` : '', count: Math.floor(300 + Math.random() * 700 + Math.sin(i * 0.15) * 200 + i * 2) };
+  });
+  const mockLogs = Array.from({length: 6}).map((_, i) => ({ id: `log-${i}`, time: `2023-10-24 14:${50 - i * 5}:23`, service: consumer.serviceName, caller: consumer.owner, duration: Math.floor(Math.random() * 200) + 20, status: Math.random() > 0.1 ? 200 : 500 }));
+
+  return (
+    <div className="space-y-6 animate-in slide-in-from-right-8 duration-300">
+      {onBack && (
+        <div className="flex items-center space-x-3 mb-2">
+          <button type="button" onClick={onBack} className="p-1.5 bg-white border border-slate-200 rounded-md hover:bg-slate-50 text-slate-500 transition-colors"><ArrowLeft size={16} /></button>
+          <div className="text-sm font-medium text-slate-600">返回上一级</div>
+        </div>
+      )}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+         <div className="text-xs text-slate-500 mb-1">{apiName ? '接口调用监控' : '全局场景监控'}</div>
+         <div className="font-semibold text-slate-800 text-lg flex items-center"><Globe size={18} className="mr-2 text-blue-500"/> {consumer.scenario}<span className="mx-3 text-slate-300">|</span><span className="text-sm text-slate-600 font-normal font-mono">{apiName ? `目标能力：${apiName}` : consumer.serviceName}</span></div>
+         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+           <div><div className="text-xs text-slate-500 mb-1">系统域账号</div><div className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded inline-flex"><ShieldCheck size={12} className="mr-1"/>{consumer.systemAccount || '无'}</div></div>
+           <div><div className="text-xs text-slate-500 mb-1">网关地址</div><div className="font-mono text-slate-800 text-xs">{consumer.gateway || '无'}</div></div>
+         </div>
+      </div>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm p-5">
+         <h3 className="text-sm font-bold text-slate-800 flex items-center mb-6"><BarChart3 size={16} className="mr-2 text-indigo-500"/> 近90天总调用次数趋势</h3>
+         <TrendChart data={chartData} />
+      </div>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50"><h3 className="text-sm font-bold text-slate-800 flex items-center"><Server size={16} className="mr-2 text-emerald-500"/> 实时调用明细日志</h3></div>
+        <LogTable logs={mockLogs} />
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 5. Global Modals
+// ==========================================
+
+function GlobalToast() {
+  const { toast } = useContext(AppContext);
+  if (!toast.show) return null;
+  return (
+    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+      <div className={`flex items-center px-4 py-3 rounded-lg shadow-lg border ${
+        toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+      }`}>
+        {toast.type === 'success' ? <CheckCircle2 size={18} className="mr-2 text-emerald-500" /> : <XCircle size={18} className="mr-2 text-rose-500" />}
+        <span className="text-sm font-medium">{toast.message}</span>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal() {
+  const { confirmDialog, setConfirmDialog } = useContext(AppContext);
+  if (!confirmDialog.isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[400px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+         <div className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center mr-4 flex-shrink-0">
+                <AlertCircle size={20} className="text-rose-600" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-800">{confirmDialog.title}</h2>
+            </div>
+            <p className="text-sm text-slate-600 ml-14">{confirmDialog.message}</p>
+         </div>
+         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
+            <button type="button" onClick={() => setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null })} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">取消</button>
+            <button type="button" onClick={() => { if(confirmDialog.onConfirm) confirmDialog.onConfirm(); setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null }); }} className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors">确认操作</button>
+         </div>
+      </div>
+    </div>
+  );
+}
+
+function UploadResultModal() {
+  const { uploadResult, setUploadResult } = useContext(AppContext);
+  if (!uploadResult) return null;
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[400px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
+            <h2 className="text-lg font-bold text-emerald-800 flex items-center">
+              <CheckCircle2 size={20} className="mr-2 text-emerald-600" /> 批量导入成功
+            </h2>
+         </div>
+         <div className="p-6 space-y-4">
+            <p className="text-sm text-slate-600">系统已根据您的文件内容完成了接口能力与业务场景的注册关联。</p>
+            <div className="bg-slate-50 border border-slate-100 rounded-lg p-4 space-y-3 text-sm">
+               <div className="flex justify-between items-center">
+                 <span className="text-slate-500 flex items-center"><Database size={14} className="mr-2"/> 新增能力域</span>
+                 <span className="font-bold text-slate-800">{uploadResult.addedProviders} 个</span>
+               </div>
+               <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                 <span className="text-slate-500 flex items-center"><Box size={14} className="mr-2"/> 成功注册接口</span>
+                 <span className="font-bold text-blue-600">{uploadResult.addedApis} 个</span>
+               </div>
+               <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                 <span className="text-slate-500 flex items-center"><LayoutGrid size={14} className="mr-2"/> 接入业务场景</span>
+                 <span className="font-bold text-emerald-600">{uploadResult.addedConsumers} 个</span>
+               </div>
+            </div>
+         </div>
+         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button type="button" onClick={() => setUploadResult(null)} className="px-6 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">我知道了</button>
+         </div>
+      </div>
+    </div>
+  );
+}
+
+function ConsumerFormModal() {
+  const { isConsumerModalOpen, setIsConsumerModalOpen, editingConsumer, setConsumers, showToast, currentUser } = useContext(AppContext);
+  if (!isConsumerModalOpen) return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = { domain: e.target.domain.value, serviceName: e.target.serviceName.value, scenario: e.target.scenario.value, domainOwner: e.target.domainOwner.value, owner: e.target.owner.value, gateway: e.target.gateway.value };
+    if (editingConsumer) { setConsumers(prev => prev.map(c => c.id === editingConsumer.id ? { ...c, ...payload } : c)); showToast('业务场景档案更新成功！'); }
+    else { setConsumers(prev => [{ id: `APP_${Date.now()}`, ...payload, createTime: new Date().toISOString().split('T')[0], systemAccount: '未分配', enabled: true }, ...prev]); showToast('新的业务场景档案创建成功！'); }
+    setIsConsumerModalOpen(false);
+  };
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[600px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50 text-emerald-800 flex-shrink-0">
+          <h2 className="text-lg font-bold flex items-center"><AppWindow size={18} className="mr-2 text-emerald-600" /> {editingConsumer ? '编辑业务场景档案' : '新增业务场景档案'}</h2>
+          <button type="button" onClick={() => setIsConsumerModalOpen(false)} className="text-emerald-600 hover:text-emerald-800"><X size={20}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">业务域 <span className="text-rose-500">*</span></label><input name="domain" defaultValue={editingConsumer?.domain || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none" placeholder="例如：电商、物流..." /></div>
+            <div className="col-span-1"><label className="block text-xs font-semibold text-slate-600 mb-1">业务场景 <span className="text-rose-500">*</span></label><input name="scenario" defaultValue={editingConsumer?.scenario || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none" placeholder="例如：智能匹配中台服务" /></div>
+            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">应用服务名 (Service Name) <span className="text-rose-500">*</span></label><input name="serviceName" defaultValue={editingConsumer?.serviceName || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-emerald-500 focus:outline-none" placeholder="例如：zkh-qts-apr-search-pro" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">域负责人 <span className="text-rose-500">*</span></label><select name="domainOwner" defaultValue={editingConsumer?.domainOwner || MOCK_DOMAIN_OWNERS[0]} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(owner => <option key={owner} value={owner}>{owner}</option>)}</select></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">场景负责人 <span className="text-rose-500">*</span></label><select name="owner" defaultValue={editingConsumer?.owner || currentUser} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(owner => <option key={owner} value={owner}>{owner}</option>)}</select></div>
+            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">网关地址</label><input name="gateway" defaultValue={editingConsumer?.gateway || ''} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-emerald-500 focus:outline-none" placeholder="https://gw.company.com" /></div>
+          </div>
+          <div className="pt-4 flex justify-end space-x-3 border-t border-slate-100">
+            <button type="button" onClick={() => setIsConsumerModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">取消</button>
+            <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors">保存档案</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AppServiceFormModal() {
+  const { isAppServiceModalOpen, setIsAppServiceModalOpen, editingAppService, setAppServices, showToast, currentUser } = useContext(AppContext);
+  if (!isAppServiceModalOpen) return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = { serviceName: e.target.serviceName.value, domain: e.target.domain.value, publicDomain: e.target.publicDomain.value, innerDomain: e.target.innerDomain.value, domainOwner: e.target.domainOwner.value, owner: e.target.owner.value, swaggerUrl: e.target.swaggerUrl.value, swaggerUser: e.target.swaggerUser.value, swaggerPwd: e.target.swaggerPwd.value };
+    if (editingAppService) { setAppServices(prev => prev.map(s => s.id === editingAppService.id ? { ...s, ...payload } : s)); showToast('应用服务档案更新成功！'); }
+    else { setAppServices(prev => [{ id: `SVC_${Date.now()}`, ...payload, enabled: true }, ...prev]); showToast('新的应用服务档案创建成功！'); }
+    setIsAppServiceModalOpen(false);
+  };
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[700px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-indigo-50 text-indigo-800 flex-shrink-0">
+          <h2 className="text-lg font-bold flex items-center"><Server size={18} className="mr-2 text-indigo-600" /> {editingAppService ? '编辑应用服务与域名' : '新增应用服务与域名'}</h2>
+          <button type="button" onClick={() => setIsAppServiceModalOpen(false)} className="text-indigo-600 hover:text-indigo-800"><X size={20}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">应用服务名(ARMS) <span className="text-rose-500">*</span></label><input name="serviceName" defaultValue={editingAppService?.serviceName || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:outline-none" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">业务域 <span className="text-rose-500">*</span></label><input name="domain" defaultValue={editingAppService?.domain || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">域负责人 <span className="text-rose-500">*</span></label><select name="domainOwner" defaultValue={editingAppService?.domainOwner || MOCK_DOMAIN_OWNERS[0]} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(owner => <option key={owner} value={owner}>{owner}</option>)}</select></div>
+            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">公网域名 <span className="text-rose-500">*</span></label><input name="publicDomain" defaultValue={editingAppService?.publicDomain || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:outline-none" /></div>
+            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">内部域名 <span className="text-rose-500">*</span></label><input name="innerDomain" defaultValue={editingAppService?.innerDomain || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:outline-none" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">服务Owner <span className="text-rose-500">*</span></label><select name="owner" defaultValue={editingAppService?.owner || currentUser} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(owner => <option key={owner} value={owner}>{owner}</option>)}</select></div>
+            <div className="col-span-2 mt-2 pt-2 border-t border-slate-100"><label className="block text-xs font-semibold text-slate-600 mb-1">Swagger地址 <span className="text-rose-500">*</span></label><input name="swaggerUrl" defaultValue={editingAppService?.swaggerUrl || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:outline-none" placeholder="http://..." /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">Swagger账号</label><input name="swaggerUser" defaultValue={editingAppService?.swaggerUser || ''} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">Swagger密码</label><input name="swaggerPwd" defaultValue={editingAppService?.swaggerPwd || ''} type="password" className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" /></div>
+          </div>
+          <div className="pt-4 flex justify-end space-x-3 border-t border-slate-100">
+            <button type="button" onClick={() => setIsAppServiceModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">取消</button>
+            <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">保存配置</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ApplyModal() {
+  const { isApplyModalOpen, setIsApplyModalOpen, applyConsumerId, apis, consumers, relations, requests, setRequests, showToast, currentUser } = useContext(AppContext);
+  const [apiSearch, setApiSearch] = useState('');
+  const [selectedApis, setSelectedApis] = useState([]);
+  useEffect(() => { if (isApplyModalOpen) { setSelectedApis([]); setApiSearch(''); } }, [isApplyModalOpen]);
+  if (!isApplyModalOpen) return null;
+  const consumer = consumers.find(c => c.id === applyConsumerId) || {};
+  const filteredApis = apis.filter(a => a.name.includes(apiSearch) || a.url.includes(apiSearch));
+  const toggleApi = (apiId) => { if (selectedApis.includes(apiId)) setSelectedApis(selectedApis.filter(id => id !== apiId)); else setSelectedApis([...selectedApis, apiId]); };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const systemAccount = e.target.systemAccount.value;
+    if (selectedApis.length === 0) { showToast('请至少选择一个接口能力进行订阅！', 'error'); return; }
+    let skipCount = 0; const newReqs = [];
+    selectedApis.forEach(apiId => {
+      const isExist = relations.some(r => r.apiId === apiId && r.consumerId === applyConsumerId);
+      const isPending = requests.some(r => r.apiId === apiId && r.consumerId === applyConsumerId && r.status === '待审批');
+      if (isExist || isPending) { skipCount++; } else {
+        newReqs.push({ id: `REQ_${Date.now()}_${Math.random().toString(36).substr(2,4)}`, apiId, consumerId: applyConsumerId, applicant: currentUser, status: '待审批', createTime: new Date().toISOString().split('T')[0], systemAccount, approveTime: '-' });
+      }
+    });
+    if (newReqs.length > 0) { setRequests(prev => [...newReqs, ...prev]); showToast(`成功提交 ${newReqs.length} 个接口的订阅申请！${skipCount > 0 ? `(${skipCount}个被跳过)` : ''}`); setIsApplyModalOpen(false); }
+    else { showToast('选择的接口均已接入或在审批中，无须重复提交。', 'error'); }
+  };
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[650px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-indigo-50 text-indigo-800 flex-shrink-0">
+          <h2 className="text-lg font-bold flex items-center"><Link2 size={18} className="mr-2 text-indigo-600" /> 申请订阅接口能力</h2>
+          <button type="button" onClick={() => setIsApplyModalOpen(false)} className="text-indigo-600 hover:text-indigo-800"><X size={20}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 flex flex-col max-h-[80vh]">
+          <div className="bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-600 flex items-center flex-shrink-0"><Box size={16} className="text-slate-400 mr-2 flex-shrink-0"/><span>正在为业务场景 <strong className="text-slate-800">{consumer.scenario} ({consumer.serviceName})</strong> 申请接口。</span></div>
+          <div className="flex-shrink-0"><label className="block text-xs font-semibold text-slate-600 mb-2">申请系统域账号 <span className="text-rose-500">*</span></label><select name="systemAccount" required className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none bg-white shadow-sm cursor-pointer"><option value="">-- 请下拉选择系统域账号 --</option>{MOCK_SYSTEM_ACCOUNTS.map(acc => <option key={acc} value={acc}>{acc}</option>)}</select></div>
+          <div className="flex-1 overflow-hidden flex flex-col min-h-[300px]">
+            <label className="block text-xs font-semibold text-slate-600 mb-2">选择订阅接口 (可多选) <span className="text-rose-500">*</span></label>
+            <div className="relative mb-3 flex-shrink-0"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={14} /><input type="text" placeholder="搜索接口名称或地址..." value={apiSearch} onChange={e => setApiSearch(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:border-indigo-500 focus:outline-none shadow-sm" /></div>
+            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-md p-2 bg-slate-50 space-y-1">
+              {filteredApis.length > 0 ? filteredApis.map(api => (
+                <label key={api.id} className={`flex items-start p-3 rounded border cursor-pointer transition-colors ${selectedApis.includes(api.id) ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200 hover:border-indigo-300'}`}>
+                  <input type="checkbox" className="mt-0.5 mr-3 w-4 h-4 text-indigo-600 rounded cursor-pointer" checked={selectedApis.includes(api.id)} onChange={() => toggleApi(api.id)} />
+                  <div className="flex-1 overflow-hidden"><div className="font-semibold text-slate-800 text-sm truncate">{api.name}</div><div className="text-xs text-slate-500 font-mono truncate mt-0.5"><MethodBadge method={api.method} /> {api.url}</div></div>
+                </label>
+              )) : <div className="text-center py-8 text-sm text-slate-400">暂无匹配接口</div>}
+            </div>
+            <div className="text-xs text-slate-500 mt-2 flex-shrink-0">已选中 <span className="font-bold text-indigo-600">{selectedApis.length}</span> 个接口</div>
+          </div>
+          <div className="pt-4 flex justify-end space-x-3 border-t border-slate-100 flex-shrink-0">
+            <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">取消</button>
+            <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">提交申请</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function RegisterModal() {
+  const { isRegisterModalOpen, setIsRegisterModalOpen, setApis, setProviders, setUploadResult, showToast, currentUser } = useContext(AppContext);
+  const [tab, setTab] = useState('bulk');
+  const fileInputRef = useRef(null);
+  if (!isRegisterModalOpen) return null;
+  const handleSingleSubmit = (e) => {
+    e.preventDefault();
+    const newApi = { id: `API_${Date.now()}`, name: e.target.name.value, providerId: e.target.providerId.value, url: e.target.url.value, publicDomain: e.target.publicDomain.value, method: e.target.method.value, version: e.target.version.value || 'v1.0', domainOwner: e.target.domainOwner.value, owner: currentUser, status: '规划中', desc: e.target.desc.value, docUrl: '' };
+    setApis(prev => [...prev, newApi]); setIsRegisterModalOpen(false); showToast('单个接口注册成功！');
+  };
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.csv')) { showToast('格式错误！请上传 CSV 格式文件。', 'error'); e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target.result;
+      const rows = parseCSV(text).filter(row => row.join('').trim() !== '');
+      if (rows.length <= 1) { showToast('文件为空或解析失败。', 'error'); e.target.value = ''; return; }
+      let addedProviders = 0, addedApis = 0, addedConsumers = 0;
+      setProviders(prev => { const map = new Map(); prev.forEach(p => map.set(p.name.split(' ')[0], p)); rows.slice(1).forEach(cols => { const pName = cols[0]?.trim(); if (pName && !map.has(pName)) { map.set(pName, { id: `p_${Date.now()}_${Math.random()}`, name: pName, owner: cols[7]?.trim() || '未知', color: 'bg-slate-100 text-slate-700' }); addedProviders++; } }); return Array.from(map.values()); });
+      setApis(prev => { const map = new Map(); prev.forEach(a => map.set(a.url, a)); rows.slice(1).forEach(cols => { const url = cols[4]?.trim(); if (url && !map.has(url)) { map.set(url, { id: `API_${Date.now()}_${Math.random()}`, providerId: `p_algo`, name: cols[1]?.trim() || '未命名', publicDomain: cols[3]?.trim(), url, method: 'GET', version: cols[5]?.trim() || 'V1.0', domainOwner: cols[7]?.trim(), owner: cols[7]?.trim(), status: cols[8]?.trim() || '已上线', desc: cols[2]?.trim(), docUrl: '' }); addedApis++; } }); return Array.from(map.values()); });
+      e.target.value = ''; setIsRegisterModalOpen(false); setUploadResult({ addedProviders, addedApis, addedConsumers });
+    };
+    reader.readAsText(file, 'gbk');
+  };
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[600px] flex flex-col overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center"><PlusCircle size={18} className="mr-2 text-blue-600" /> 能力接口注册</h2>
+          <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
+        </div>
+        <div className="flex border-b border-slate-200">
+           <button type="button" onClick={() => setTab('bulk')} className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${tab==='bulk' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>CSV 模板批量导入</button>
+          <button type="button" onClick={() => setTab('single')} className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${tab==='single' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>手动单个注册</button>
+        </div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto">
+          {tab === 'single' ? (
+            <form onSubmit={handleSingleSubmit} className="space-y-4">
+               <div className="grid grid-cols-2 gap-4">
+                <div><label className="block text-xs text-slate-500 mb-1">能力点(接口名)</label><input name="name" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" /></div>
+                <div><label className="block text-xs text-slate-500 mb-1">归属能力域</label><select name="providerId" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white"><option value="p_algo">算法</option></select></div>
+                <div><label className="block text-xs text-slate-500 mb-1">HTTP Method</label><select name="method" required defaultValue="POST" className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{MOCK_HTTP_METHODS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+                <div><label className="block text-xs text-slate-500 mb-1">接口版本</label><input name="version" required defaultValue="v1.0" className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" /></div>
+                <div><label className="block text-xs text-slate-500 mb-1">域负责人</label><select name="domainOwner" required defaultValue={MOCK_DOMAIN_OWNERS[0]} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div><label className="block text-xs text-slate-500 mb-1">公网域名</label><input name="publicDomain" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" /></div>
+                <div className="col-span-2"><label className="block text-xs text-slate-500 mb-1">接口地址</label><input name="url" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" /></div>
+                <div className="col-span-2"><label className="block text-xs text-slate-500 mb-1">接口描述</label><textarea name="desc" rows="3" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" /></div>
+              </div>
+              <div className="pt-4 flex justify-end space-x-3"><button type="button" onClick={() => setIsRegisterModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">取消</button><button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">确认注册</button></div>
+            </form>
+          ) : (
+            <div className="text-center py-8">
+              <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
+              <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer flex flex-col items-center" onClick={() => fileInputRef.current.click()}>
+                <FileSpreadsheet size={48} className="text-blue-400 mb-4" />
+                <p className="text-slate-700 font-medium mb-1">点击选择 CSV 模板文件</p>
+                <button type="button" className="mt-6 px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors inline-flex items-center shadow-sm"><Upload size={16} className="mr-2"/> 选取 CSV 文件</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppDependenciesModal() {
+  const { isAppDepsModalOpen, setIsAppDepsModalOpen, depsConsumerId, consumers, relations, apis, providers, openDrawer, setIsAppDepsModalOpen: closeModal } = useContext(AppContext);
+  const [callMonitorApi, setCallMonitorApi] = useState(null);
+  if (!isAppDepsModalOpen) return null;
+  const consumer = consumers.find(c => c.id === depsConsumerId);
+  if (!consumer) return null;
+  const relationApiIds = relations.filter(r => r.consumerId === consumer.id).map(r => r.apiId);
+  const relatedApis = apis.filter(a => relationApiIds.includes(a.id));
+
+  // Generate mock call counts for each API
+  const getApiCallStats = (apiId) => {
+    let hash = 0; const str = apiId + depsConsumerId;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const seed = Math.abs(hash);
+    const d7 = (seed % 4901) + 100;
+    const d30 = d7 * (3 + (seed % 5)) + (seed % 2000);
+    const d90 = d30 * (2 + (seed % 4)) + (seed % 5000);
+    const d180 = d90 * (1.5 + (seed % 3) * 0.5) + (seed % 8000);
+    return { d7, d30: Math.floor(d30), d90: Math.floor(d90), d180: Math.floor(d180) };
+  };
+
+  const allStats = relatedApis.map(a => getApiCallStats(a.id));
+  const totalStats = allStats.reduce((acc, s) => ({ d7: acc.d7 + s.d7, d30: acc.d30 + s.d30, d90: acc.d90 + s.d90, d180: acc.d180 + s.d180 }), { d7: 0, d30: 0, d90: 0, d180: 0 });
+
+  if (callMonitorApi) {
+    return (
+      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 flex items-center"><Activity size={18} className="mr-2 text-blue-600" /> 调用详情</h2>
+                <p className="text-xs text-slate-500 mt-1">业务场景：<strong className="text-slate-700">{consumer.scenario}</strong> → 接口：<strong className="text-slate-700">{callMonitorApi.name}</strong></p>
+              </div>
+              <button type="button" onClick={() => setIsAppDepsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
+           </div>
+           <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+              <CallMonitorPanel consumer={consumer} apiName={callMonitorApi.name} onBack={() => setCallMonitorApi(null)} />
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800 flex items-center"><Layers size={18} className="mr-2 text-emerald-600" /> 依赖的能力详情</h2>
+              <p className="text-xs text-slate-500 mt-1">当前业务场景：<strong className="text-slate-700">{consumer.scenario}</strong></p>
+            </div>
+            <button type="button" onClick={() => setIsAppDepsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
+         </div>
+         <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近7天调用次数</div><div className="text-xl font-bold text-indigo-600">{totalStats.d7.toLocaleString()}</div></div>
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近30天调用次数</div><div className="text-xl font-bold text-blue-600">{totalStats.d30.toLocaleString()}</div></div>
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近90天调用次数</div><div className="text-xl font-bold text-emerald-600">{totalStats.d90.toLocaleString()}</div></div>
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近180天调用次数</div><div className="text-xl font-bold text-orange-600">{totalStats.d180.toLocaleString()}</div></div>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                  <tr><th className="px-5 py-3.5 font-semibold text-slate-700">能力域</th><th className="px-5 py-3.5 font-semibold text-slate-700">能力点</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口描述</th><th className="px-5 py-3.5 font-semibold text-slate-700">公网域名</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口地址</th><th className="px-5 py-3.5 font-semibold text-slate-700">版本</th><th className="px-5 py-3.5 font-semibold text-slate-700">状态</th><th className="px-5 py-3.5 font-semibold text-slate-700">负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">近7天</th><th className="px-5 py-3.5 font-semibold text-slate-700">近30天</th><th className="px-5 py-3.5 font-semibold text-slate-700">近90天</th><th className="px-5 py-3.5 font-semibold text-slate-700">近180天</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {relatedApis.length > 0 ? relatedApis.map(api => {
+                    const provider = providers.find(p => p.id === api.providerId) || { name: '未知' };
+                    const stats = getApiCallStats(api.id);
+                    return (
+                      <tr key={api.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <td className="px-5 py-4"><span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border bg-slate-100 text-slate-700`}>{(provider.name || '未知').split(' ')[0]}</span></td>
+                        <td className="px-5 py-4 font-medium text-slate-900">{api.name}</td><td className="px-5 py-4 text-slate-500 max-w-[120px] truncate" title={api.desc}>{api.desc}</td><td className="px-5 py-4 font-mono text-slate-600 text-xs">{api.publicDomain}</td><td className="px-5 py-4 font-mono text-slate-600 text-xs">{api.url}</td><td className="px-5 py-4 font-mono text-slate-600 text-xs">{api.version}</td><td className="px-5 py-4"><StatusBadge status={api.status} /></td><td className="px-5 py-4"><OwnerBadge name={api.owner} /></td>
+                        <td className="px-5 py-4 text-slate-600 font-mono text-xs">{stats.d7.toLocaleString()}</td>
+                        <td className="px-5 py-4 text-slate-600 font-mono text-xs">{stats.d30.toLocaleString()}</td>
+                        <td className="px-5 py-4 text-slate-600 font-mono text-xs">{stats.d90.toLocaleString()}</td>
+                        <td className="px-5 py-4 text-slate-600 font-mono text-xs">{stats.d180.toLocaleString()}</td>
+                        <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-slate-50/80 border-l border-slate-100 transition-colors z-10">
+                          <div className="flex justify-center items-center space-x-3">
+                            <button type="button" onClick={handleDocClick} className="text-indigo-600 font-medium hover:text-indigo-800 hover:underline inline-flex items-center text-sm"><ExternalLink size={14} className="mr-1" /> 文档</button>
+                            <div className="w-px h-3 bg-slate-300"></div>
+                            <button type="button" onClick={() => setCallMonitorApi(api)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm">调用详情 <ChevronRight size={14} className="ml-0.5" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }) : <tr><td colSpan="13" className="py-16 text-center text-slate-500"><Layers size={32} className="mx-auto mb-3 text-slate-300" /><p>该场景暂未依赖任何底层能力</p></td></tr>}
+                </tbody>
+              </table>
+            </div>
+         </div>
+      </div>
+    </div>
+  );
+}
+
+function ApiScenarioDrawerContent() {
+  const { apis, relations, consumers, selectedId, openDrawer } = useContext(AppContext);
+  const [detailConsumerId, setDetailConsumerId] = useState(null);
+  const api = apis.find(a => a.id === selectedId);
+  if (!api) return null;
+  const relatedConsumers = relations.filter(r => r.apiId === api.id).map(r => consumers.find(c => c.id === r.consumerId)).filter(Boolean);
+  if (detailConsumerId) { const consumer = relatedConsumers.find(c => c.id === detailConsumerId); return <CallMonitorPanel consumer={consumer} apiName={api.name} onBack={() => setDetailConsumerId(null)} />; }
+  const getConsumerStats = (cId, aId) => { let hash = 0; const str = cId + aId; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const base = Math.abs(hash) % 1000 + 100; return { d7: base * 7, d30: base * 30, d90: base * 85, d180: base * 160 }; };
+  const totalStats = relatedConsumers.reduce((acc, c) => { const stats = getConsumerStats(c.id, api.id); acc.d7 += stats.d7; acc.d30 += stats.d30; acc.d90 += stats.d90; acc.d180 += stats.d180; return acc; }, { d7: 0, d30: 0, d90: 0, d180: 0 });
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近7天调用次数</div><div className="text-xl font-bold text-indigo-600">{totalStats.d7.toLocaleString()}</div></div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近30天调用次数</div><div className="text-xl font-bold text-indigo-600">{totalStats.d30.toLocaleString()}</div></div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近90天调用次数</div><div className="text-xl font-bold text-indigo-600">{totalStats.d90.toLocaleString()}</div></div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center"><div className="text-xs text-slate-500 mb-1">近180天调用次数</div><div className="text-xl font-bold text-indigo-600">{totalStats.d180.toLocaleString()}</div></div>
+      </div>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50"><h3 className="text-sm font-bold text-slate-800 flex items-center"><Network size={16} className="mr-2 text-blue-500"/> 被调用的业务场景</h3></div>
+        {relatedConsumers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+              <thead className="bg-white border-b border-slate-100"><tr><th className="px-5 py-3 font-semibold text-slate-600">业务域</th><th className="px-5 py-3 font-semibold text-slate-600">业务场景</th><th className="px-5 py-3 font-semibold text-slate-600">近7天</th><th className="px-5 py-3 font-semibold text-slate-600">近30天</th><th className="px-5 py-3 font-semibold text-slate-600">近90天</th><th className="px-5 py-3 font-semibold text-slate-600">近180天</th><th className="px-5 py-3 font-semibold text-slate-600">应用服务名</th><th className="px-5 py-3 font-semibold text-slate-600">系统域账号</th><th className="px-5 py-3 font-semibold text-slate-600">网关地址</th><th className="px-5 py-3 font-semibold text-slate-600 text-center sticky right-0 bg-white shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.1)]">操作</th></tr></thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {relatedConsumers.map(c => {
+                  const stats = getConsumerStats(c.id, api.id);
+                  return (
+                    <tr key={c.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3"><div className="font-medium text-slate-800">{c.domain}</div></td>
+                      <td className="px-5 py-3 text-slate-700">{c.scenario}</td>
+                      <td className="px-5 py-3 text-slate-600 font-mono">{stats.d7.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-600 font-mono">{stats.d30.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-600 font-mono">{stats.d90.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-600 font-mono">{stats.d180.toLocaleString()}</td>
+                      <td className="px-5 py-3"><div className="text-xs text-slate-500 font-mono mt-0.5 bg-slate-100 inline-block px-1 rounded">{c.serviceName}</div></td>
+                      <td className="px-5 py-3"><span className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded w-max"><ShieldCheck size={12} className="mr-1"/>{c.systemAccount || '无'}</span></td>
+                      <td className="px-5 py-3 text-slate-600 font-mono text-xs">{c.gateway || '无'}</td>
+                      <td className="px-5 py-3 text-center sticky right-0 bg-white group-hover:bg-slate-50 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.1)]"><button type="button" onClick={() => setDetailConsumerId(c.id)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm">调用详情 <ChevronRight size={14} className="ml-0.5" /></button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : <div className="bg-white p-10 text-center"><p className="text-slate-600">暂无下游应用调用此接口</p></div>}
+      </div>
+    </div>
+  );
+}
+
+function AppCallDetailsDrawerContent() {
+  const { consumers, selectedId } = useContext(AppContext);
+  const consumer = consumers.find(c => c.id === selectedId);
+  if (!consumer) return null;
+  return <CallMonitorPanel consumer={consumer} />;
+}
+
+function ApiDependencyNode({ apiId, level = 0 }) {
+  const { apis, providers, apiDependencies, openDrawer } = useContext(AppContext);
+  const api = apis.find(a => a.id === apiId);
+  const childrenDependencies = apiDependencies.filter(d => d.callerId === apiId);
+  if (!api) return null;
+  const provider = providers.find(p => p.id === api.providerId) || { name: '未知' };
+  return (
+    <div className="relative mt-4">
+      {level > 0 && <div className="absolute -left-[1.6rem] top-[2.2rem] w-6 h-px bg-slate-300"></div>}
+      <div className={`relative z-10 bg-white border ${level === 0 ? 'border-indigo-400 shadow-md ring-2 ring-indigo-50' : 'border-slate-200 hover:border-indigo-300'} rounded-xl p-4 transition-all w-full max-w-2xl`}>
+        <div className="flex items-center justify-between mb-3">
+           <div className="flex items-center space-x-2"><MethodBadge method={api.method} /><span className="font-bold text-slate-800 text-sm">{api.name}</span><span className="text-xs text-slate-400 font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{api.id}</span></div>
+           <StatusBadge status={api.status} />
+        </div>
+        <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
+           <div className="text-slate-500">归属域: <span className="text-slate-800 font-medium">{provider.name}</span></div>
+           <div className="text-slate-500">负责人: <span className="text-slate-800">{api.owner}</span></div>
+           <div className="col-span-2 text-slate-500 flex items-start"><span className="flex-shrink-0">调用地址:</span><span className="font-mono text-slate-800 ml-1 bg-slate-50 px-1 rounded break-all">{api.url}</span></div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-50 flex justify-end space-x-4">
+           <button type="button" onClick={handleDocClick} className="text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center transition-colors"><ExternalLink size={13} className="mr-1" /> 接口文档</button>
+           <div className="w-px h-3.5 bg-slate-200 mt-0.5"></div>
+           <button type="button" onClick={() => openDrawer('api-scenario', api.id)} className="text-blue-600 hover:text-blue-800 text-xs font-medium inline-flex items-center transition-colors"><Network size={13} className="mr-1" /> 场景与影响面</button>
+        </div>
+      </div>
+      {childrenDependencies.length > 0 && (
+        <div className="relative pl-[1.6rem] ml-[1rem] pb-2">
+          <div className="absolute left-0 top-0 bottom-6 w-px bg-slate-300"></div>
+          {childrenDependencies.map(dep => <ApiDependencyNode key={dep.calleeId} apiId={dep.calleeId} level={level + 1} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ApiUpstreamDrawerContent() {
+  const { selectedId, apis } = useContext(AppContext);
+  const rootApi = apis.find(a => a.id === selectedId);
+  if (!rootApi) return null;
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
+      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-sm text-indigo-800 flex items-start">
+        <Info size={16} className="inline mr-2 flex-shrink-0 mt-0.5 text-indigo-500" />
+        <div>当前展示的是 <strong className="font-bold">{rootApi.name}</strong> 接口的微服务调用依赖链路。系统自动穿透分析底层的全部级联调用拓扑图。</div>
+      </div>
+      <div className="p-2 pt-0"><ApiDependencyNode apiId={selectedId} level={0} /></div>
+    </div>
+  );
+}
+
+// ==========================================
+// 6. Core Views
+// ==========================================
+function StatsView() {
+  const { providers, apis, consumers, relations } = useContext(AppContext);
+  const w = 240, h = 60;
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50 overflow-auto">
+      <div className="mb-6"><h1 className="text-xl font-bold text-slate-800">系统统计概览</h1><p className="text-sm text-slate-500 mt-1">全域系统能力资产分布与健康度分析</p></div>
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center shadow-sm"><div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center mr-5"><Database size={24} className="text-indigo-600"/></div><div><div className="text-sm font-medium text-slate-500 mb-1">能力域总数</div><div className="text-3xl font-bold text-slate-800">{providers.length}</div></div></div>
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center shadow-sm"><div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mr-5"><Box size={24} className="text-blue-600"/></div><div><div className="text-sm font-medium text-slate-500 mb-1">沉淀接口总数</div><div className="text-3xl font-bold text-slate-800">{apis.length}</div></div></div>
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center shadow-sm"><div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mr-5"><LayoutGrid size={24} className="text-emerald-600"/></div><div><div className="text-sm font-medium text-slate-500 mb-1">接入业务场景</div><div className="text-3xl font-bold text-slate-800">{consumers.length}</div></div></div>
+      </div>
+      <h2 className="text-lg font-bold text-slate-800 mb-4">各能力域核心指标</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
+        {providers.map((provider, idx) => {
+          const domainApis = apis.filter(a => a.providerId === provider.id);
+          const apiIds = domainApis.map(a => a.id);
+          const domainRelations = relations.filter(r => apiIds.includes(r.apiId));
+          const uniqueConsumers = new Set(domainRelations.map(r => r.consumerId)).size;
+          const seed = provider.id.charCodeAt(provider.id.length - 1);
+          const callCount = domainRelations.length * 15200 + seed * 2305 + 8500;
+          const trendData = Array.from({length: 14}).map((_, i) => 200 + Math.sin((i + seed) * 0.5) * 100 + (idx * 20));
+          const maxVal = Math.max(...trendData) * 1.1;
+          const points = trendData.map((d, i) => `${(i / (trendData.length - 1)) * w},${h - (d / maxVal) * h}`).join(' ');
+          const areaPoints = `0,${h} ${points} ${w},${h}`;
+          const strokeColor = '#3b82f6';
+          return (
+            <div key={provider.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><div className="font-bold text-slate-800 text-base">{provider.name}</div><OwnerBadge name={provider.owner} /></div>
+              <div className="p-5 flex-1">
+                <div className="grid grid-cols-3 gap-4 text-center mb-6">
+                  <div><div className="text-xl font-bold text-slate-800">{domainApis.length}</div><div className="text-xs text-slate-500 mt-1">接口数量</div></div>
+                  <div><div className="text-xl font-bold text-slate-800">{uniqueConsumers}</div><div className="text-xs text-slate-500 mt-1">接入场景</div></div>
+                  <div><div className="text-xl font-bold text-slate-800">{callCount.toLocaleString()}</div><div className="text-xs text-slate-500 mt-1">累计调用</div></div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="text-xs text-slate-400 mb-2 flex justify-between"><span>近14天调用趋势</span></div>
+                  <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-12 overflow-visible">
+                    <defs><linearGradient id={`grad-${provider.id}`} x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={strokeColor} stopOpacity="0.2" /><stop offset="100%" stopColor={strokeColor} stopOpacity="0" /></linearGradient></defs>
+                    <polygon points={areaPoints} fill={`url(#grad-${provider.id})`} />
+                    <polyline points={points} fill="none" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ApiTableView() {
+  const { apis, providers, globalSearch, setIsRegisterModalOpen, openDrawer } = useContext(AppContext);
+  const [filterDomain, setFilterDomain] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterFuzzy, setFilterFuzzy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  useEffect(() => { setCurrentPage(1); }, [globalSearch, filterDomain, filterStatus, filterFuzzy]);
+  let filteredData = apis;
+  if (globalSearch) filteredData = filteredData.filter(item => item.name.includes(globalSearch) || item.desc.includes(globalSearch) || item.id.includes(globalSearch));
+  if (filterDomain) filteredData = filteredData.filter(item => item.providerId === filterDomain);
+  if (filterStatus) filteredData = filteredData.filter(item => item.status === filterStatus);
+  if (filterFuzzy) { const lowerFuzzy = filterFuzzy.toLowerCase(); filteredData = filteredData.filter(item => (item.name && item.name.toLowerCase().includes(lowerFuzzy)) || (item.desc && item.desc.toLowerCase().includes(lowerFuzzy)) || (item.publicDomain && item.publicDomain.toLowerCase().includes(lowerFuzzy)) || (item.url && item.url.toLowerCase().includes(lowerFuzzy)) || (item.id && item.id.toLowerCase().includes(lowerFuzzy))); }
+  const totalItems = filteredData.length;
+  const safePage = Math.min(Math.max(currentPage, 1), Math.ceil(totalItems / pageSize) || 1);
+  const paginatedData = filteredData.slice((safePage - 1) * pageSize, safePage * pageSize);
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div><h1 className="text-xl font-bold text-slate-800">接口能力清单（对外开放）</h1><p className="text-sm text-slate-500 mt-1">全局视角的业务域接口台账 (共 {totalItems} 个)</p></div>
+        <div className="flex space-x-3">
+          <button type="button" onClick={() => setIsRegisterModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 flex items-center transition-colors"><Plus size={16} className="mr-2"/> 接口注册</button>
+          <button type="button" className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 flex items-center transition-colors"><Download size={16} className="mr-2"/> 导出接口清单</button>
+        </div>
+      </div>
+      <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm mb-4">
+        <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="支持按能力ID、能力点、描述、公网域名、地址进行模糊搜索" className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm transition-all outline-none" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
+        <div className="w-px h-6 bg-slate-200 mx-2"></div>
+        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5"><Database size={14} className="text-slate-400 mr-2"/><select className="bg-transparent text-sm outline-none text-slate-700 w-32 cursor-pointer" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}><option value="">全部能力域</option>{providers.map(p => <option key={p.id} value={p.id}>{(p.name||'').split(' ')[0]}</option>)}</select></div>
+        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5"><Activity size={14} className="text-slate-400 mr-2"/><select className="bg-transparent text-sm outline-none text-slate-700 w-32 cursor-pointer" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}><option value="">全部状态</option><option value="已上线">已上线</option><option value="开发中">开发中</option><option value="规划中">规划中</option><option value="已废弃">已废弃</option></select></div>
+      </div>
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">能力域</th><th className="px-5 py-3.5 font-semibold text-slate-700">能力ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">能力点</th><th className="px-5 py-3.5 font-semibold text-slate-700">HTTP Method</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口描述</th><th className="px-5 py-3.5 font-semibold text-slate-700">公网域名</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口地址</th><th className="px-5 py-3.5 font-semibold text-slate-700">版本</th><th className="px-5 py-3.5 font-semibold text-slate-700">状态</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedData.map(api => {
+                const provider = providers.find(p => p.id === api.providerId) || { name: '未知' };
+                return (
+                  <tr key={api.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <td className="px-5 py-4"><span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border bg-slate-100 text-slate-700`}>{(provider.name||'').split(' ')[0]}</span></td>
+                    <td className="px-5 py-4 font-mono text-slate-500 text-xs">{api.id}</td>
+                    <td className="px-5 py-4 font-medium text-slate-900">{api.name}</td>
+                    <td className="px-5 py-4"><MethodBadge method={api.method} /></td>
+                    <td className="px-5 py-4 text-slate-500 max-w-[150px] truncate" title={api.desc}>{api.desc}</td>
+                    <td className="px-5 py-4 font-mono text-slate-600 text-xs truncate max-w-[150px]" title={api.publicDomain}>{api.publicDomain}</td>
+                    <td className="px-5 py-4 font-mono text-slate-600 text-xs">{api.url}</td>
+                    <td className="px-5 py-4 font-mono text-slate-600 text-xs">{api.version}</td>
+                    <td className="px-5 py-4"><StatusBadge status={api.status} /></td>
+                    <td className="px-5 py-4"><OwnerBadge name={api.domainOwner} /></td>
+                    <td className="px-5 py-4"><OwnerBadge name={api.owner} /></td>
+                    <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-slate-50/80 border-l border-slate-100 transition-colors z-10">
+                      <div className="flex justify-center items-center space-x-3">
+                        <button type="button" onClick={handleDocClick} className="text-indigo-600 font-medium hover:text-indigo-800 hover:underline inline-flex items-center text-sm whitespace-nowrap"><ExternalLink size={14} className="mr-1" /> 文档</button>
+                        <div className="w-px h-3 bg-slate-300"></div>
+                        <button type="button" onClick={() => openDrawer('api-scenario', api.id)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm whitespace-nowrap">业务场景</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {paginatedData.length === 0 && <tr><td colSpan="12" className="py-24 text-center text-slate-500"><Box size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的接口数据</p></td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <Pagination total={totalItems} current={safePage} pageSize={pageSize} onChange={setCurrentPage} />
+      </div>
+    </div>
+  );
+}
+
+function AppTableView() {
+  const { consumers, relations, globalSearch, openAppDepsModal, openDrawer } = useContext(AppContext);
+  const [filterAppDomain, setFilterAppDomain] = useState('');
+  const [filterAppFuzzy, setFilterAppFuzzy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  useEffect(() => { setCurrentPage(1); }, [globalSearch, filterAppDomain, filterAppFuzzy]);
+  const uniqueAppDomains = Array.from(new Set(consumers.map(c => c.domain)));
+  let filteredApps = consumers;
+  if (globalSearch) { filteredApps = filteredApps.filter(app => app.scenario.includes(globalSearch) || app.serviceName.includes(globalSearch)); }
+  if (filterAppDomain) filteredApps = filteredApps.filter(app => app.domain === filterAppDomain);
+  if (filterAppFuzzy) { const lower = filterAppFuzzy.toLowerCase(); filteredApps = filteredApps.filter(app => app.scenario.toLowerCase().includes(lower) || app.serviceName.toLowerCase().includes(lower)); }
+  const totalItems = filteredApps.length;
+  const safePage = Math.min(Math.max(currentPage, 1), Math.ceil(totalItems / pageSize) || 1);
+  const paginatedApps = filteredApps.slice((safePage - 1) * pageSize, safePage * pageSize);
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <div className="mb-4">
+        <h1 className="text-xl font-bold text-slate-800 mb-4">业务场景调用依赖</h1>
+        <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+          <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="支持按业务场景等进行搜索" className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-md text-sm transition-all outline-none" value={filterAppFuzzy} onChange={(e) => setFilterAppFuzzy(e.target.value)} /></div>
+          <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-40 px-3 py-1.5 rounded-md cursor-pointer" value={filterAppDomain} onChange={(e) => setFilterAppDomain(e.target.value)}><option value="">全部业务域</option>{uniqueAppDomains.map(domain => <option key={domain} value={domain}>{domain}</option>)}</select>
+        </div>
+      </div>
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700 w-40">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">场景负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">系统域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">网关地址</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">能力依赖</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedApps.map(app => {
+                const depCount = relations.filter(r => r.consumerId === app.id).length;
+                return (
+                  <tr key={app.id} className="hover:bg-emerald-50/50 transition-colors group">
+                    <td className="px-5 py-4"><span className="inline-flex items-center text-slate-700 font-medium"><Globe size={14} className="mr-2 text-slate-400" />{app.domain}</span></td>
+                    <td className="px-5 py-4 font-mono text-slate-500 text-xs">{app.id}</td>
+                    <td className="px-5 py-4 font-medium text-slate-900">{app.scenario}</td>
+                    <td className="px-5 py-4 font-mono text-slate-600 text-xs bg-slate-50 rounded px-2 border border-slate-100">{app.serviceName}</td>
+                    <td className="px-5 py-4"><OwnerBadge name={app.domainOwner} /></td>
+                    <td className="px-5 py-4"><OwnerBadge name={app.owner} /></td>
+                    <td className="px-5 py-4"><span className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded w-max"><ShieldCheck size={12} className="mr-1"/>{app.systemAccount || '无'}</span></td>
+                    <td className="px-5 py-4 font-mono text-slate-600 text-xs">{app.gateway || '无'}</td>
+                    <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-emerald-50/50 border-l border-slate-100 transition-colors z-10"><button type="button" onClick={() => openAppDepsModal(app.id)} className="bg-emerald-100 text-emerald-700 py-1 px-3 rounded-full text-xs font-bold hover:bg-emerald-200 transition-colors" title="点击查看依赖详情">{depCount}</button></td>
+                  </tr>
+                );
+              })}
+              {paginatedApps.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的业务场景数据</p></td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <Pagination total={totalItems} current={safePage} pageSize={pageSize} onChange={setCurrentPage} />
+      </div>
+    </div>
+  );
+}
+
+function AppServiceDomainManageView() {
+  const { appServices = INITIAL_APP_SERVICES, globalSearch, setAppServices, showToast } = useContext(AppContext);
+  const [filterDomain, setFilterDomain] = useState('');
+  const [filterDomainOwner, setFilterDomainOwner] = useState('');
+  const [filterOwner, setFilterOwner] = useState('');
+  const [filterFuzzy, setFilterFuzzy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const { setIsAppServiceModalOpen, setEditingAppService } = useContext(AppContext);
+  const pageSize = 10;
+  useEffect(() => { setCurrentPage(1); }, [globalSearch, filterDomain, filterDomainOwner, filterOwner, filterFuzzy]);
+  let filteredData = appServices;
+  if (globalSearch) { filteredData = filteredData.filter(app => app.serviceName.includes(globalSearch) || app.publicDomain.includes(globalSearch) || app.innerDomain.includes(globalSearch)); }
+  if (filterDomain) filteredData = filteredData.filter(app => app.domain === filterDomain);
+  if (filterDomainOwner) filteredData = filteredData.filter(app => app.domainOwner === filterDomainOwner);
+  if (filterOwner) filteredData = filteredData.filter(app => app.owner === filterOwner);
+  if (filterFuzzy) { const lower = filterFuzzy.toLowerCase(); filteredData = filteredData.filter(app => app.serviceName.toLowerCase().includes(lower) || app.publicDomain.toLowerCase().includes(lower) || app.innerDomain.toLowerCase().includes(lower) || app.swaggerUrl.toLowerCase().includes(lower)); }
+  const uniqueDomains = Array.from(new Set(appServices.map(c => c.domain)));
+  const uniqueDomainOwners = Array.from(new Set(appServices.map(c => c.domainOwner)));
+  const uniqueOwners = Array.from(new Set(appServices.map(c => c.owner)));
+  const totalItems = filteredData.length;
+  const safePage = Math.min(Math.max(currentPage, 1), Math.ceil(totalItems / pageSize) || 1);
+  const paginatedData = filteredData.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const handleOpenModal = (svc = null) => { setEditingAppService(svc); setIsAppServiceModalOpen(true); };
+  const toggleServiceStatus = (id) => { setAppServices(prev => prev.map(s => s.id === id ? { ...s, enabled: s.enabled === false ? true : false } : s)); showToast('应用服务状态已更新！'); };
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div><h1 className="text-xl font-bold text-slate-800 mb-4">应用服务&域名管理</h1></div>
+        <button type="button" onClick={() => handleOpenModal()} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-emerald-700 flex items-center transition-colors"><Plus size={16} className="mr-2"/> 新增服务配置</button>
+      </div>
+      <div className="mb-4 flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="支持按应用服务名、公网域名、内部域名、Swagger地址模糊搜索" className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-md text-sm transition-all outline-none" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
+        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}><option value="">全部业务域</option>{uniqueDomains.map(d => <option key={d} value={d}>{d}</option>)}</select>
+        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterDomainOwner} onChange={(e) => setFilterDomainOwner(e.target.value)}><option value="">全域负责人</option>{uniqueDomainOwners.map(o => <option key={o} value={o}>{o}</option>)}</select>
+        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)}><option value="">全服务Owner</option>{uniqueOwners.map(o => <option key={o} value={o}>{o}</option>)}</select>
+      </div>
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名(ARMS)</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">公网域名</th><th className="px-5 py-3.5 font-semibold text-slate-700">内部域名</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">服务Owner</th><th className="px-5 py-3.5 font-semibold text-slate-700">Swagger地址</th><th className="px-5 py-3.5 font-semibold text-slate-700">Swagger账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">Swagger密码</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedData.map(svc => (
+                <tr key={svc.id} className={`hover:bg-indigo-50/50 transition-colors group ${svc.enabled === false ? 'opacity-60 grayscale-[50%]' : ''}`}>
+                  <td className="px-5 py-4 font-mono text-slate-700 font-semibold">{svc.serviceName}</td>
+                  <td className="px-5 py-4"><span className="inline-flex items-center text-slate-700"><Globe size={14} className="mr-1.5 text-slate-400" />{svc.domain}</span></td>
+                  <td className="px-5 py-4 font-mono text-slate-600 text-xs">{svc.publicDomain}</td>
+                  <td className="px-5 py-4 font-mono text-slate-600 text-xs">{svc.innerDomain}</td>
+                  <td className="px-5 py-4"><OwnerBadge name={svc.domainOwner} /></td>
+                  <td className="px-5 py-4"><OwnerBadge name={svc.owner} /></td>
+                  <td className="px-5 py-4 font-mono text-blue-600 text-xs hover:underline cursor-pointer"><a href={svc.swaggerUrl} target="_blank" rel="noreferrer">{svc.swaggerUrl}</a></td>
+                  <td className="px-5 py-4 font-mono text-slate-600 text-xs bg-slate-50 px-2 rounded border border-slate-100">{svc.swaggerUser}</td>
+                  <td className="px-5 py-4 font-mono text-slate-600 text-xs bg-slate-50 px-2 rounded border border-slate-100">***</td>
+                  <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-indigo-50/50 border-l border-slate-100 transition-colors z-10">
+                     <div className="flex justify-center items-center space-x-3">
+                       <button type="button" onClick={() => handleOpenModal(svc)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm"><Edit size={14} className="mr-1" /> 编辑</button>
+                       <div className="w-px h-3 bg-slate-300"></div>
+                       <ToggleSwitch enabled={svc.enabled !== false} onChange={() => toggleServiceStatus(svc.id)} />
+                     </div>
+                  </td>
+                </tr>
+              ))}
+              {paginatedData.length === 0 && <tr><td colSpan="10" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的服务域名数据</p></td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <Pagination total={totalItems} current={safePage} pageSize={pageSize} onChange={setCurrentPage} />
+      </div>
+    </div>
+  );
+}
+
+function AppManageView() {
+  const { consumers, setConsumers, relations, setRelations, globalSearch, openConsumerModal, showToast, openApplyModal } = useContext(AppContext);
+  const [manageFilterFuzzy, setManageFilterFuzzy] = useState('');
+  const [manageCurrentPage, setManageCurrentPage] = useState(1);
+  useEffect(() => { setManageCurrentPage(1); }, [globalSearch, manageFilterFuzzy]);
+  let filteredApps = consumers;
+  if (globalSearch) filteredApps = filteredApps.filter(app => app.scenario.includes(globalSearch) || app.serviceName.includes(globalSearch));
+  if (manageFilterFuzzy) { const lower = manageFilterFuzzy.toLowerCase(); filteredApps = filteredApps.filter(app => app.scenario.toLowerCase().includes(lower) || app.serviceName.toLowerCase().includes(lower)); }
+  const pageSize = 10;
+  const totalItems = filteredApps.length;
+  const safePage = Math.min(Math.max(manageCurrentPage, 1), Math.ceil(totalItems / pageSize) || 1);
+  const paginatedApps = filteredApps.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const toggleConsumerStatus = (id) => { setConsumers(prev => prev.map(c => c.id === id ? { ...c, enabled: c.enabled === false ? true : false } : c)); showToast('业务场景状态已更新！'); };
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div><h1 className="text-xl font-bold text-slate-800">业务场景管理</h1><p className="text-sm text-slate-500 mt-1">业务场景定义：基于Controller层的方法，每一个方法就是一个业务场景</p></div>
+        <button type="button" onClick={() => openConsumerModal(null)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-emerald-700 flex items-center transition-colors"><Plus size={16} className="mr-2"/> 新增场景配置</button>
+      </div>
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700 w-40">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名 (Service)</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">场景负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">网关地址</th><th className="px-5 py-3.5 font-semibold text-slate-700">维护时间</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作配置</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedApps.map(app => (
+                <tr key={app.id} className={`hover:bg-emerald-50/50 transition-colors group ${app.enabled === false ? 'opacity-60 grayscale-[50%]' : ''}`}>
+                  <td className="px-5 py-4"><span className="inline-flex items-center text-slate-700 font-medium"><Globe size={14} className="mr-2 text-slate-400" />{app.domain}</span></td>
+                  <td className="px-5 py-4 font-mono text-slate-500 text-xs">{app.id}</td>
+                  <td className="px-5 py-4 font-medium text-slate-900">{app.scenario}</td>
+                  <td className="px-5 py-4 font-mono text-slate-600 text-xs bg-slate-50 rounded px-2 border border-slate-100">{app.serviceName}</td>
+                  <td className="px-5 py-4"><OwnerBadge name={app.domainOwner} /></td>
+                  <td className="px-5 py-4"><OwnerBadge name={app.owner} /></td>
+                  <td className="px-5 py-4 text-slate-600 font-mono text-xs">{app.gateway || '无'}</td>
+                  <td className="px-5 py-4 text-slate-500 text-xs font-mono">{app.createTime || '2023-01-01'}</td>
+                  <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-emerald-50/50 border-l border-slate-100 transition-colors z-10">
+                     <div className="flex justify-center items-center space-x-3">
+                       <button type="button" onClick={() => openApplyModal(app.id)} className="text-indigo-600 font-medium hover:text-indigo-800 hover:underline inline-flex items-center text-sm"><Link2 size={14} className="mr-1" /> 申请订阅</button>
+                       <div className="w-px h-3 bg-slate-300"></div>
+                       <button type="button" onClick={() => openConsumerModal(app)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm"><Edit size={14} className="mr-1" /> 编辑</button>
+                       <div className="w-px h-3 bg-slate-300"></div>
+                       <ToggleSwitch enabled={app.enabled !== false} onChange={() => toggleConsumerStatus(app.id)} />
+                     </div>
+                  </td>
+                </tr>
+              ))}
+              {paginatedApps.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的业务场景记录，请先新增</p></td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <Pagination total={totalItems} current={safePage} pageSize={pageSize} onChange={setManageCurrentPage} />
+      </div>
+    </div>
+  );
+}
+
+function RequestManageView() {
+  const { requests, setRequests, apis, consumers, relations, setRelations, currentUser, showToast } = useContext(AppContext);
+  const [subTab, setSubTab] = useState('my_requests');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  useEffect(() => { setCurrentPage(1); }, [subTab, currentUser]);
+  let filteredRequests = requests.filter(req => {
+      if (subTab === 'my_requests') return req.applicant === currentUser;
+      const api = apis.find(a => a.id === req.apiId);
+      return api && (api.owner.includes(currentUser) || api.domainOwner.includes(currentUser));
+  });
+  const totalItems = filteredRequests.length;
+  const safePage = Math.min(Math.max(currentPage, 1), Math.ceil(totalItems / pageSize) || 1);
+  const paginatedReqs = filteredRequests.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const handleApprove = (req) => { setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: '已通过', approveTime: new Date().toISOString().split('T')[0] } : r)); setRelations(prev => [...prev, { apiId: req.apiId, consumerId: req.consumerId }]); showToast('审批通过成功，系统调用授权已自动生效！'); };
+  const handleReject = (req) => { setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: '已驳回', approveTime: new Date().toISOString().split('T')[0] } : r)); showToast('已成功驳回该接口接入申请！', 'error'); };
+  const handleCancel = (req) => { setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: '已撤销', approveTime: new Date().toISOString().split('T')[0] } : r)); showToast('您已成功撤销该申请。'); };
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <div className="mb-4"><h1 className="text-xl font-bold text-slate-800">申请与审批管理</h1><p className="text-sm text-slate-500 mt-1">跟踪并管理所有接入接口能力的申请单据与授权状态。</p></div>
+      <div className="flex space-x-1 mb-4 border-b border-slate-200">
+        <button type="button" onClick={() => setSubTab('my_requests')} className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${subTab === 'my_requests' ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}>我的申请</button>
+        <button type="button" onClick={() => setSubTab('todo')} className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${subTab === 'todo' ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}>待我审批</button>
+      </div>
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">申请单号</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请订阅接口</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请系统域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请人</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请时间</th><th className="px-5 py-3.5 font-semibold text-slate-700">审批时间</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center">状态</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedReqs.map(req => {
+                const api = apis.find(a => a.id === req.apiId) || { name: '未知', url: '未知' };
+                const consumer = consumers.find(c => c.id === req.consumerId) || { domain: '未知', scenario: '未知', serviceName: '未知' };
+                return (
+                  <tr key={req.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <td className="px-5 py-4 font-mono text-xs text-slate-500">{req.id}</td>
+                    <td className="px-5 py-4"><div className="font-medium text-slate-900">{api.name}</div><div className="text-xs text-slate-500 font-mono mt-0.5">{api.url}</div></td>
+                    <td className="px-5 py-4"><OwnerBadge name={api.owner} /></td>
+                    <td className="px-5 py-4"><div className="flex items-center text-slate-700"><Globe size={14} className="mr-1.5 text-slate-400" /> {consumer.domain} - {consumer.scenario}</div><div className="text-xs text-slate-500 font-mono mt-0.5">{consumer.serviceName}</div></td>
+                    <td className="px-5 py-4"><span className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded w-max"><ShieldCheck size={12} className="mr-1"/>{req.systemAccount || '无'}</span></td>
+                    <td className="px-5 py-4"><OwnerBadge name={req.applicant} /></td>
+                    <td className="px-5 py-4 text-slate-500 text-xs font-mono">{req.createTime}</td>
+                    <td className="px-5 py-4 text-slate-500 text-xs font-mono">{req.approveTime || '-'}</td>
+                    <td className="px-5 py-4 text-center"><RequestStatusBadge status={req.status} /></td>
+                    <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-slate-50/80 border-l border-slate-100 transition-colors z-10">
+                      <div className="flex justify-center items-center space-x-3">
+                        {subTab === 'my_requests' && req.status === '待审批' && (<button type="button" onClick={() => handleCancel(req)} className="text-slate-600 font-medium hover:text-slate-800 hover:underline inline-flex items-center text-sm">撤销申请</button>)}
+                        {subTab === 'todo' && req.status === '待审批' && (
+                           <><button type="button" onClick={() => handleApprove(req)} className="text-emerald-600 font-medium hover:text-emerald-800 hover:underline inline-flex items-center text-sm"><Check size={14} className="mr-1"/> 通过</button><div className="w-px h-3 bg-slate-300"></div><button type="button" onClick={() => handleReject(req)} className="text-rose-600 font-medium hover:text-rose-800 hover:underline inline-flex items-center text-sm"><Ban size={14} className="mr-1"/> 驳回</button></>
+                        )}
+                        {req.status !== '待审批' && <span className="text-slate-400 text-xs">-</span>}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {paginatedReqs.length === 0 && <tr><td colSpan="10" className="py-24 text-center text-slate-500"><ClipboardList size={48} className="mx-auto mb-4 text-slate-300" /><p>当前分类下暂无申请记录</p></td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <Pagination total={totalItems} current={safePage} pageSize={pageSize} onChange={setCurrentPage} />
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 7. Root App Component
+// ==========================================
+function App() {
+  const [activeMenu, setActiveMenu] = useState('apis');
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [currentUser, setCurrentUser] = useState('孙业');
+  const [providers, setProviders] = useState(INITIAL_PROVIDERS);
+  const [apis, setApis] = useState(INITIAL_APIS);
+  const [apiDependencies, setApiDependencies] = useState(INITIAL_API_DEPENDENCIES);
+  const [consumers, setConsumers] = useState(INITIAL_CONSUMERS);
+  const [relations, setRelations] = useState(INITIAL_RELATIONS);
+  const [requests, setRequests] = useState(INITIAL_REQUESTS);
+  const [appServices, setAppServices] = useState(INITIAL_APP_SERVICES);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+  const [uploadResult, setUploadResult] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerType, setDrawerType] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [applyConsumerId, setApplyConsumerId] = useState(null);
+  const [isAppServiceModalOpen, setIsAppServiceModalOpen] = useState(false);
+  const [editingAppService, setEditingAppService] = useState(null);
+  const [isConsumerModalOpen, setIsConsumerModalOpen] = useState(false);
+  const [editingConsumer, setEditingConsumer] = useState(null);
+  const [isAppDepsModalOpen, setIsAppDepsModalOpen] = useState(false);
+  const [depsConsumerId, setDepsConsumerId] = useState(null);
+  const showToast = (message, type = 'success') => { setToast({ show: true, message, type }); setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500); };
+  const openDrawer = (type, id) => { setDrawerType(type); setSelectedId(id); setDrawerOpen(true); };
+  const openApplyModal = (consumerId) => { setApplyConsumerId(consumerId); setIsApplyModalOpen(true); };
+  const openConsumerModal = (consumer = null) => { setEditingConsumer(consumer); setIsConsumerModalOpen(true); };
+  const openAppDepsModal = (consumerId) => { setDepsConsumerId(consumerId); setIsAppDepsModalOpen(true); };
+  const ctx = {
+    activeMenu, setActiveMenu, globalSearch, setGlobalSearch, currentUser, setCurrentUser,
+    providers, setProviders, apis, setApis, consumers, setConsumers, relations, setRelations, requests, setRequests,
+    appServices, setAppServices, apiDependencies, setApiDependencies,
+    toast, setToast, confirmDialog, setConfirmDialog, uploadResult, setUploadResult,
+    drawerOpen, setDrawerOpen, drawerType, setDrawerType, selectedId, setSelectedId,
+    isRegisterModalOpen, setIsRegisterModalOpen, isApplyModalOpen, setIsApplyModalOpen, applyConsumerId, setApplyConsumerId,
+    isAppServiceModalOpen, setIsAppServiceModalOpen, editingAppService, setEditingAppService,
+    isConsumerModalOpen, setIsConsumerModalOpen, editingConsumer, setEditingConsumer,
+    isAppDepsModalOpen, setIsAppDepsModalOpen, depsConsumerId, setDepsConsumerId, openAppDepsModal,
+    showToast, openDrawer, openApplyModal, openConsumerModal
+  };
+  return (
+    <AppContext.Provider value={ctx}>
+      <div className="flex flex-col h-screen w-full bg-slate-50 font-sans text-slate-900 overflow-hidden relative">
+        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-sm relative">
+          <div className="flex items-center space-x-8 h-full">
+            <div className="flex items-center">
+              <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center mr-3 shadow-md shadow-blue-200"><Network size={16} className="text-white" /></div>
+              <span className="text-base font-bold text-slate-800 tracking-wide">能力地图系统</span>
+            </div>
+            <nav className="flex items-center space-x-2 h-full pt-1">
+              <button type="button" onClick={() => setActiveMenu('stats')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'stats' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><PieChart size={16} className="mr-2" /> 统计概览</button>
+              <button type="button" onClick={() => setActiveMenu('apis')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'apis' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><Box size={16} className="mr-2" /> 接口能力清单</button>
+              <button type="button" onClick={() => setActiveMenu('apps')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'apps' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><LayoutGrid size={16} className="mr-2" /> 业务场景依赖</button>
+              <button type="button" onClick={() => setActiveMenu('app_manage')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'app_manage' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><AppWindow size={16} className="mr-2" /> 业务场景管理</button>
+              <button type="button" onClick={() => setActiveMenu('services')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'services' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><Server size={16} className="mr-2" /> 应用服务&域名管理</button>
+              <button type="button" onClick={() => setActiveMenu('requests')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'requests' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><ClipboardList size={16} className="mr-2" /> 申请管理</button>
+            </nav>
+          </div>
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={14} />
+               <input type="text" placeholder="全局搜索..." className="w-48 pl-8 pr-4 py-1.5 bg-slate-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-full text-xs transition-all outline-none" value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} />
+            </div>
+            <div className="flex items-center space-x-3 border-l border-slate-200 pl-6">
+              <span className="text-xs text-slate-400">当前测试账号:</span>
+              <select className="bg-slate-100 text-slate-700 text-sm font-semibold rounded-md px-2 py-1 outline-none cursor-pointer border hover:border-blue-300" value={currentUser} onChange={(e) => setCurrentUser(e.target.value)}>
+                <option value="孙业">孙业 (QTS / 算法)</option>
+                <option value="肖海杰">肖海杰 (商家)</option>
+                <option value="李托托">李托托 (大数据)</option>
+                <option value="架构师_EA">架构师_EA (全部可见)</option>
+              </select>
+            </div>
+          </div>
+        </header>
+        <main className="flex-1 overflow-hidden relative">
+          {activeMenu === 'stats' && <StatsView />}
+          {activeMenu === 'apis' && <ApiTableView />}
+          {activeMenu === 'apps' && <AppTableView />}
+          {activeMenu === 'app_manage' && <AppManageView />}
+          {activeMenu === 'services' && <AppServiceDomainManageView />}
+          {activeMenu === 'requests' && <RequestManageView />}
+        </main>
+        <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} title={drawerType === 'api-scenario' ? '接口影响面与调用监控' : drawerType === 'app-call-details' ? '业务场景调用详情' : drawerType === 'api-upstream' ? '全链路依赖下探' : ''} icon={drawerType === 'api-scenario' ? <Network /> : drawerType === 'api-upstream' ? <Waypoints /> : <Activity />}>
+          {drawerType === 'api-upstream' ? <ApiUpstreamDrawerContent /> : null}
+          {drawerType === 'api-scenario' ? <ApiScenarioDrawerContent /> : null}
+          {drawerType === 'app-call-details' ? <AppCallDetailsDrawerContent /> : null}
+        </Drawer>
+        <GlobalToast />
+        <ConfirmModal />
+        <UploadResultModal />
+        <AppDependenciesModal />
+        <RegisterModal />
+        <ApplyModal />
+        <ConsumerFormModal />
+        <AppServiceFormModal />
+      </div>
+    </AppContext.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
