@@ -223,6 +223,22 @@ const INITIAL_REQUESTS = [
   { id: 'REQ_30005', apiId: 'API_10002', consumerId: 'APP_2005', applicant: '李托托', status: '待审批', createTime: '2023-10-27', approveTime: '-', systemAccount: 'sys_data_01' },
 ];
 
+const MODULE_ENUMS = ['接口能力清单', '业务场景管理', '应用服务&域名管理'];
+const ROLE_ENUMS = ['管理员', '开发者', '审批人', '观察者'];
+
+const INITIAL_MEMBERS = [
+  { id: 'MEM_001', module: '接口能力清单', domain: '算法', account: 'sys_algo_01', name: '姜杰', email: 'jiangjie@zkh360.com', role: '管理员', remark: '算法域主负责人' },
+  { id: 'MEM_002', module: '接口能力清单', domain: '客户', account: 'sys_customer_01', name: '汪翔', email: 'wangxiang@zkh360.com', role: '管理员', remark: '客户域主负责人' },
+  { id: 'MEM_003', module: '业务场景管理', domain: '安全', account: 'sys_security_01', name: '肖浩', email: 'xiaohao@zkh360.com', role: '开发者', remark: '安全域接口负责' },
+  { id: 'MEM_004', module: '业务场景管理', domain: 'QTS', account: 'sys_qts_01', name: '孙业', email: 'sunye@zkh360.com', role: '审批人', remark: 'QTS域审批人' },
+  { id: 'MEM_005', module: '应用服务&域名管理', domain: '订单', account: 'sys_order_01', name: '包明天', email: 'baomingtian@zkh360.com', role: '开发者', remark: '订单域开发者' },
+  { id: 'MEM_006', module: '接口能力清单', domain: '商家', account: 'sys_merchant_01', name: '肖海杰', email: 'xiaohaijie@zkh360.com', role: '管理员', remark: '商家域主负责人' },
+  { id: 'MEM_007', module: '应用服务&域名管理', domain: '商品', account: 'sys_item_01', name: '张涛', email: 'zhangtao@zkh360.com', role: '开发者', remark: '商品域开发者' },
+  { id: 'MEM_008', module: '业务场景管理', domain: '算法', account: 'sys_algo_02', name: '李托托', email: 'lituotuo@zkh360.com', role: '观察者', remark: '大数据观察者' },
+  { id: 'MEM_009', module: '接口能力清单', domain: '算法', account: 'sys_algo_03', name: '董阮琦', email: 'dongruanchen@zkh360.com', role: '开发者', remark: '算法域接口开发者' },
+  { id: 'MEM_010', module: '应用服务&域名管理', domain: 'QTS', account: 'sys_qts_02', name: '孙业', email: 'sunye2@zkh360.com', role: '管理员', remark: 'QTS域服务管理' },
+];
+
 // ==========================================
 // 2. Context
 // ==========================================
@@ -694,7 +710,7 @@ function RegisterModal() {
   if (!isRegisterModalOpen) return null;
   const handleSingleSubmit = (e) => {
     e.preventDefault();
-    const newApi = { id: `API_${Date.now()}`, name: e.target.name.value, providerId: e.target.providerId.value, url: e.target.url.value, publicDomain: e.target.publicDomain.value, method: e.target.method.value, version: e.target.version.value || 'v1.0', domainOwner: e.target.domainOwner.value, owner: currentUser, status: '规划中', desc: e.target.desc.value, docUrl: '' };
+    const newApi = { id: `API_${Date.now()}`, name: e.target.name.value, providerId: e.target.providerId.value, url: e.target.url.value, publicDomain: e.target.publicDomain.value, method: e.target.method.value, version: e.target.version.value || 'v1.0', domainOwner: e.target.domainOwner.value, owner: e.target.owner.value || currentUser, status: '规划中', desc: e.target.desc.value, docUrl: '' };
     setApis(prev => [...prev, newApi]); setIsRegisterModalOpen(false); showToast('单个接口注册成功！');
   };
   const handleFileUpload = (e) => {
@@ -732,6 +748,7 @@ function RegisterModal() {
                 <div><label className="block text-xs text-slate-500 mb-1">HTTP Method</label><select name="method" required defaultValue="POST" className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{MOCK_HTTP_METHODS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
                 <div><label className="block text-xs text-slate-500 mb-1">接口版本</label><input name="version" required defaultValue="v1.0" className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" /></div>
                 <div><label className="block text-xs text-slate-500 mb-1">域负责人</label><select name="domainOwner" required defaultValue={MOCK_DOMAIN_OWNERS[0]} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div><label className="block text-xs text-slate-500 mb-1">接口负责人</label><input name="owner" required defaultValue={currentUser} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="输入接口负责人姓名" /></div>
                 <div><label className="block text-xs text-slate-500 mb-1">公网域名</label><input name="publicDomain" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" /></div>
                 <div className="col-span-2"><label className="block text-xs text-slate-500 mb-1">接口地址</label><input name="url" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" /></div>
                 <div className="col-span-2"><label className="block text-xs text-slate-500 mb-1">接口描述</label><textarea name="desc" rows="3" required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" /></div>
@@ -1337,6 +1354,125 @@ function RequestManageView() {
 }
 
 // ==========================================
+// 6.5 Member Management
+// ==========================================
+function MemberFormModal() {
+  const { isMemberModalOpen, setIsMemberModalOpen, editingMember, setMembers, showToast, providers } = useContext(AppContext);
+  if (!isMemberModalOpen) return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = { module: e.target.module.value, domain: e.target.domain.value, account: e.target.account.value, name: e.target.memberName.value, email: e.target.email.value, role: e.target.role.value, remark: e.target.remark.value };
+    if (editingMember) {
+      setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, ...payload } : m));
+      showToast('成员信息更新成功！');
+    } else {
+      const newId = `MEM_${String(Date.now()).slice(-6)}`;
+      setMembers(prev => [{ id: newId, ...payload }, ...prev]);
+      showToast('新成员添加成功！');
+    }
+    setIsMemberModalOpen(false);
+  };
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-[600px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-blue-50 text-blue-800 flex-shrink-0">
+          <h2 className="text-lg font-bold flex items-center"><Users size={18} className="mr-2 text-blue-600" /> {editingMember ? '编辑成员' : '新增成员'}</h2>
+          <button type="button" onClick={() => setIsMemberModalOpen(false)} className="text-blue-600 hover:text-blue-800"><X size={20}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">模块 <span className="text-rose-500">*</span></label><select name="module" defaultValue={editingMember?.module || MODULE_ENUMS[0]} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{MODULE_ENUMS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">业务域 <span className="text-rose-500">*</span></label><select name="domain" defaultValue={editingMember?.domain || providers[0]?.name} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{providers.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">域账号 <span className="text-rose-500">*</span></label><input name="account" defaultValue={editingMember?.account || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" placeholder="例如：sys_algo_01" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">姓名 <span className="text-rose-500">*</span></label><input name="memberName" defaultValue={editingMember?.name || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="输入姓名" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">邮箱 <span className="text-rose-500">*</span></label><input name="email" type="email" defaultValue={editingMember?.email || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="example@zkh360.com" /></div>
+            <div><label className="block text-xs font-semibold text-slate-600 mb-1">角色 <span className="text-rose-500">*</span></label><select name="role" defaultValue={editingMember?.role || ROLE_ENUMS[0]} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{ROLE_ENUMS.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">备注</label><input name="remark" defaultValue={editingMember?.remark || ''} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="备注信息" /></div>
+          </div>
+          <div className="pt-4 flex justify-end space-x-3 border-t border-slate-100">
+            <button type="button" onClick={() => setIsMemberModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">取消</button>
+            <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function MemberManageView() {
+  const { members, setMembers, providers, showToast, confirmDialog, setConfirmDialog } = useContext(AppContext);
+  const { isMemberModalOpen, setIsMemberModalOpen, setEditingMember } = useContext(AppContext);
+  const [filterModule, setFilterModule] = useState('');
+  const [filterDomain, setFilterDomain] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+  const [filterFuzzy, setFilterFuzzy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  useEffect(() => { setCurrentPage(1); }, [filterModule, filterDomain, filterRole, filterFuzzy]);
+  let filteredData = members;
+  if (filterModule) filteredData = filteredData.filter(m => m.module === filterModule);
+  if (filterDomain) filteredData = filteredData.filter(m => m.domain === filterDomain);
+  if (filterRole) filteredData = filteredData.filter(m => m.role === filterRole);
+  if (filterFuzzy) { const lower = filterFuzzy.toLowerCase(); filteredData = filteredData.filter(m => (m.account && m.account.toLowerCase().includes(lower)) || (m.name && m.name.toLowerCase().includes(lower)) || (m.email && m.email.toLowerCase().includes(lower)) || (m.remark && m.remark.toLowerCase().includes(lower))); }
+  const totalItems = filteredData.length;
+  const safePage = Math.min(Math.max(currentPage, 1), Math.ceil(totalItems / pageSize) || 1);
+  const paginatedData = filteredData.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const domainNames = providers.map(p => p.name);
+  const handleOpenModal = (member = null) => { setEditingMember(member); setIsMemberModalOpen(true); };
+  const handleDelete = (member) => {
+    setConfirmDialog({ isOpen: true, title: '删除成员', message: `确定要删除成员「${member.name}」（${member.id}）吗？此操作不可恢复。`, onConfirm: () => { setMembers(prev => prev.filter(m => m.id !== member.id)); showToast('成员已成功删除！'); } });
+  };
+  const roleBadgeStyle = (role) => {
+    const styles = { '管理员': 'bg-indigo-50 text-indigo-700 border-indigo-200', '开发者': 'bg-blue-50 text-blue-700 border-blue-200', '审批人': 'bg-emerald-50 text-emerald-700 border-emerald-200', '观察者': 'bg-slate-100 text-slate-600 border-slate-200' };
+    return styles[role] || 'bg-slate-100 text-slate-600 border-slate-200';
+  };
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div><h1 className="text-xl font-bold text-slate-800">成员管理</h1><p className="text-sm text-slate-500 mt-1">管理各模块的业务域成员信息，支持增删改查</p></div>
+        <button type="button" onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 flex items-center transition-colors"><Plus size={16} className="mr-2"/> 新增成员</button>
+      </div>
+      <div className="mb-4 flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="模糊搜索域账号、姓名、邮箱、备注..." className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm transition-all outline-none" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
+        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-40 px-3 py-1.5 rounded-md cursor-pointer" value={filterModule} onChange={(e) => setFilterModule(e.target.value)}><option value="">全部模块</option>{MODULE_ENUMS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}><option value="">全部业务域</option>{domainNames.map(d => <option key={d} value={d}>{d}</option>)}</select>
+        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}><option value="">全部角色</option>{ROLE_ENUMS.map(r => <option key={r} value={r}>{r}</option>)}</select>
+      </div>
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">模块</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">姓名</th><th className="px-5 py-3.5 font-semibold text-slate-700">邮箱</th><th className="px-5 py-3.5 font-semibold text-slate-700">角色</th><th className="px-5 py-3.5 font-semibold text-slate-700">备注</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedData.map(mem => (
+                <tr key={mem.id} className="hover:bg-slate-50/80 transition-colors group">
+                  <td className="px-5 py-4 font-mono text-slate-500 text-xs">{mem.id}</td>
+                  <td className="px-5 py-4"><span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">{mem.module}</span></td>
+                  <td className="px-5 py-4 font-medium text-slate-800">{mem.domain}</td>
+                  <td className="px-5 py-4 font-mono text-slate-600 text-xs">{mem.account}</td>
+                  <td className="px-5 py-4"><OwnerBadge name={mem.name} /></td>
+                  <td className="px-5 py-4 text-slate-600 text-xs">{mem.email}</td>
+                  <td className="px-5 py-4"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${roleBadgeStyle(mem.role)}`}>{mem.role}</span></td>
+                  <td className="px-5 py-4 text-slate-500 text-xs max-w-[150px] truncate" title={mem.remark}>{mem.remark}</td>
+                  <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-slate-50/80 border-l border-slate-100 transition-colors z-10">
+                    <div className="flex justify-center items-center space-x-3">
+                      <button type="button" onClick={() => handleOpenModal(mem)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm"><Edit size={14} className="mr-1" /> 编辑</button>
+                      <div className="w-px h-3 bg-slate-300"></div>
+                      <button type="button" onClick={() => handleDelete(mem)} className="text-rose-600 font-medium hover:text-rose-800 hover:underline inline-flex items-center text-sm"><Trash2 size={14} className="mr-1" /> 删除</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {paginatedData.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><Users size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的成员数据</p></td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <Pagination total={totalItems} current={safePage} pageSize={pageSize} onChange={setCurrentPage} />
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
 // 7. Root App Component
 // ==========================================
 function App() {
@@ -1366,6 +1502,10 @@ function App() {
   const [isAppDepsModalOpen, setIsAppDepsModalOpen] = useState(false);
   const [depsConsumerId, setDepsConsumerId] = useState(null);
   const [pendingApiFilter, setPendingApiFilter] = useState(null);
+  const [members, setMembers] = useState(() => { try { const saved = localStorage.getItem('capability_map_members'); return saved ? JSON.parse(saved) : INITIAL_MEMBERS; } catch(e) { return INITIAL_MEMBERS; } });
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  useEffect(() => { try { localStorage.setItem('capability_map_members', JSON.stringify(members)); } catch(e) {} }, [members]);
   const showToast = (message, type = 'success') => { setToast({ show: true, message, type }); setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500); };
   const openDrawer = (type, id) => { setDrawerType(type); setSelectedId(id); setDrawerOpen(true); };
   const openApplyModal = (consumerId) => { setApplyConsumerId(consumerId); setIsApplyModalOpen(true); };
@@ -1383,6 +1523,7 @@ function App() {
     isConsumerModalOpen, setIsConsumerModalOpen, editingConsumer, setEditingConsumer,
     isAppDepsModalOpen, setIsAppDepsModalOpen, depsConsumerId, setDepsConsumerId, openAppDepsModal,
     pendingApiFilter, setPendingApiFilter, navigateToApiList,
+    members, setMembers, isMemberModalOpen, setIsMemberModalOpen, editingMember, setEditingMember,
     showToast, openDrawer, openApplyModal, openConsumerModal
   };
   return (
@@ -1401,6 +1542,7 @@ function App() {
               <button type="button" onClick={() => setActiveMenu('app_manage')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'app_manage' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><AppWindow size={16} className="mr-2" /> 业务场景管理</button>
               <button type="button" onClick={() => setActiveMenu('services')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'services' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><Server size={16} className="mr-2" /> 应用服务&域名管理</button>
               <button type="button" onClick={() => setActiveMenu('requests')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'requests' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><ClipboardList size={16} className="mr-2" /> 申请管理</button>
+              <button type="button" onClick={() => setActiveMenu('members')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'members' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><Users size={16} className="mr-2" /> 成员管理</button>
             </nav>
           </div>
           <div className="flex items-center space-x-6">
@@ -1426,6 +1568,7 @@ function App() {
           {activeMenu === 'app_manage' && <AppManageView />}
           {activeMenu === 'services' && <AppServiceDomainManageView />}
           {activeMenu === 'requests' && <RequestManageView />}
+          {activeMenu === 'members' && <MemberManageView />}
         </main>
         <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} title={drawerType === 'api-scenario' ? '接口影响面与调用监控' : drawerType === 'app-call-details' ? '业务场景调用详情' : drawerType === 'api-upstream' ? '全链路依赖下探' : ''} icon={drawerType === 'api-scenario' ? <Network /> : drawerType === 'api-upstream' ? <Waypoints /> : <Activity />}>
           {drawerType === 'api-upstream' ? <ApiUpstreamDrawerContent /> : null}
@@ -1440,6 +1583,7 @@ function App() {
         <ApplyModal />
         <ConsumerFormModal />
         <AppServiceFormModal />
+        <MemberFormModal />
       </div>
     </AppContext.Provider>
   );
