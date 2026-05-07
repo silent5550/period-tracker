@@ -35,6 +35,9 @@ const AlertCircle = ({ className = "w-4 h-4", size = 24, ...props }) => (
 const ChevronRight = ({ className = "w-4 h-4", size = 24, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>
 );
+const ChevronDown = ({ className = "w-4 h-4", size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m6 9 6 6 6-6"/></svg>
+);
 const Database = ({ className = "w-4 h-4", size = 24, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
 );
@@ -1411,17 +1414,33 @@ function MemberManageView() {
     const styles = { '管理员': 'bg-indigo-50 text-indigo-700 border-indigo-200', '开发者': 'bg-blue-50 text-blue-700 border-blue-200' };
     return styles[role] || 'bg-slate-100 text-slate-600 border-slate-200';
   };
+  const [domainDropdownOpen, setDomainDropdownOpen] = useState(false);
+  const domainSelectorRef = React.useRef(null);
+  React.useEffect(() => {
+    const handleClickOutside = (e) => { if (domainSelectorRef.current && !domainSelectorRef.current.contains(e.target)) setDomainDropdownOpen(false); };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div><h1 className="text-xl font-bold text-slate-800">成员管理</h1><p className="text-sm text-slate-500 mt-1">管理各业务域成员信息，支持增删改查</p></div>
-          <select className="bg-white border-2 border-blue-300 text-sm outline-none text-slate-700 w-44 px-3 py-2 rounded-lg cursor-pointer font-semibold shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}><option value="">全部业务域</option>{domainNames.map(d => <option key={d} value={d}>{d}</option>)}</select>
+        <div className="relative" ref={domainSelectorRef}>
+          <button type="button" onClick={() => setDomainDropdownOpen(!domainDropdownOpen)} className="flex items-center bg-white border border-slate-300 rounded-lg px-4 py-2 cursor-pointer hover:border-blue-400 transition-colors shadow-sm">
+            <span className="text-gray-500 text-sm mr-1.5">业务域:</span>
+            <span className="text-blue-600 font-bold text-sm">{filterDomain || '全部'}</span>
+            <ChevronDown size={16} className={`ml-2 text-blue-600 transition-transform ${domainDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {domainDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[180px] py-1">
+              <div onClick={() => { setFilterDomain(''); setDomainDropdownOpen(false); }} className={`px-4 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors ${filterDomain === '' ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-slate-700'}`}>全部</div>
+              {domainNames.map(d => <div key={d} onClick={() => { setFilterDomain(d); setDomainDropdownOpen(false); }} className={`px-4 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors ${filterDomain === d ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-slate-700'}`}>{d}</div>)}
+            </div>
+          )}
         </div>
-      </div>
-      <div className="mb-4 flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-        <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="搜索域账号、姓名、邮箱、备注..." className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm transition-all outline-none" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
-        <button type="button" onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 flex items-center transition-colors whitespace-nowrap"><Plus size={16} className="mr-2"/> 新增成员</button>
+        <div className="flex items-center space-x-3">
+          <div className="relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="输入域账号或名称搜索" className="pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm w-64 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-all shadow-sm" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
+          <button type="button" onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 flex items-center transition-colors whitespace-nowrap"><Plus size={16} className="mr-2"/> 新增成员</button>
+        </div>
       </div>
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
         <div className="flex-1 overflow-auto">
