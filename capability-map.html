@@ -1423,6 +1423,7 @@ function MemberManageView() {
   }, []);
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
+      <h2 className="text-xl font-bold text-slate-800 mb-4">成员管理</h2>
       <div className="mb-4 flex items-center justify-between">
         <div className="relative" ref={domainSelectorRef}>
           <button type="button" onClick={() => setDomainDropdownOpen(!domainDropdownOpen)} className="flex items-center bg-white border border-slate-300 rounded-lg px-4 py-2 cursor-pointer hover:border-blue-400 transition-colors shadow-sm">
@@ -1536,7 +1537,7 @@ function App() {
           <div className="flex items-center space-x-8 h-full">
             <div className="flex items-center">
               <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center mr-3 shadow-md shadow-blue-200"><Network size={16} className="text-white" /></div>
-              <span className="text-base font-bold text-slate-800 tracking-wide">能力地图系统</span>
+              <span className="text-base font-bold text-slate-800 tracking-wide">全域能力地图</span>
             </div>
             <nav className="flex items-center space-x-2 h-full pt-1">
               <button type="button" onClick={() => setActiveMenu('stats')} className={`h-full px-4 flex items-center border-b-2 font-medium text-sm transition-colors ${activeMenu === 'stats' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}><PieChart size={16} className="mr-2" /> 统计概览</button>
@@ -1549,11 +1550,7 @@ function App() {
             </nav>
           </div>
           <div className="flex items-center space-x-6">
-            <div className="relative">
-               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={14} />
-               <input type="text" placeholder="全局搜索..." className="w-48 pl-8 pr-4 py-1.5 bg-slate-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-full text-xs transition-all outline-none" value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} />
-            </div>
-            <div className="flex items-center space-x-3 border-l border-slate-200 pl-6">
+            <div className="flex items-center space-x-3">
               <span className="text-xs text-slate-400">当前测试账号:</span>
               <select className="bg-slate-100 text-slate-700 text-sm font-semibold rounded-md px-2 py-1 outline-none cursor-pointer border hover:border-blue-300" value={currentUser} onChange={(e) => setCurrentUser(e.target.value)}>
                 <option value="孙业">孙业 (QTS / 算法)</option>
