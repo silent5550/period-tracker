@@ -224,7 +224,7 @@ const INITIAL_REQUESTS = [
 ];
 
 const MODULE_ENUMS = ['接口能力清单', '业务场景管理', '应用服务&域名管理'];
-const ROLE_ENUMS = ['管理员', '开发者', '审批人', '观察者'];
+const ROLE_ENUMS = ['管理员', '开发者'];
 
 const INITIAL_MEMBERS = [
   { id: 'MEM_001', module: '接口能力清单', domain: '算法', account: 'sys_algo_01', name: '姜杰', email: 'jiangjie@zkh360.com', role: '管理员', remark: '算法域主负责人' },
@@ -475,10 +475,7 @@ function CallMonitorPanel({ consumer, apiName, onBack }) {
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
          <div className="text-xs text-slate-500 mb-1">{apiName ? '接口调用监控' : '全局场景监控'}</div>
          <div className="font-semibold text-slate-800 text-lg flex items-center"><Globe size={18} className="mr-2 text-blue-500"/> {consumer.scenario}<span className="mx-3 text-slate-300">|</span><span className="text-sm text-slate-600 font-normal font-mono">{apiName ? `目标能力：${apiName}` : consumer.serviceName}</span></div>
-         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
-           <div><div className="text-xs text-slate-500 mb-1">系统域账号</div><div className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded inline-flex"><ShieldCheck size={12} className="mr-1"/>{consumer.systemAccount || '无'}</div></div>
-           <div><div className="text-xs text-slate-500 mb-1">网关地址</div><div className="font-mono text-slate-800 text-xs">{consumer.gateway || '无'}</div></div>
-         </div>
+
       </div>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm p-5">
          <h3 className="text-sm font-bold text-slate-800 flex items-center mb-6"><BarChart3 size={16} className="mr-2 text-indigo-500"/> 近90天总调用次数趋势</h3>
@@ -576,7 +573,7 @@ function ConsumerFormModal() {
   if (!isConsumerModalOpen) return null;
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = { domain: e.target.domain.value, serviceName: e.target.serviceName.value, scenario: e.target.scenario.value, domainOwner: e.target.domainOwner.value, owner: e.target.owner.value, gateway: e.target.gateway.value };
+    const payload = { domain: e.target.domain.value, serviceName: e.target.serviceName.value, scenario: e.target.scenario.value, domainOwner: e.target.domainOwner.value, owner: e.target.owner.value };
     if (editingConsumer) { setConsumers(prev => prev.map(c => c.id === editingConsumer.id ? { ...c, ...payload } : c)); showToast('业务场景档案更新成功！'); }
     else { setConsumers(prev => [{ id: `APP_${Date.now()}`, ...payload, createTime: new Date().toISOString().split('T')[0], systemAccount: '未分配', enabled: true }, ...prev]); showToast('新的业务场景档案创建成功！'); }
     setIsConsumerModalOpen(false);
@@ -595,7 +592,7 @@ function ConsumerFormModal() {
             <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">应用服务名 (Service Name) <span className="text-rose-500">*</span></label><input name="serviceName" defaultValue={editingConsumer?.serviceName || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-emerald-500 focus:outline-none" placeholder="例如：zkh-qts-apr-search-pro" /></div>
             <div><label className="block text-xs font-semibold text-slate-600 mb-1">域负责人 <span className="text-rose-500">*</span></label><select name="domainOwner" defaultValue={editingConsumer?.domainOwner || MOCK_DOMAIN_OWNERS[0]} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(owner => <option key={owner} value={owner}>{owner}</option>)}</select></div>
             <div><label className="block text-xs font-semibold text-slate-600 mb-1">场景负责人 <span className="text-rose-500">*</span></label><select name="owner" defaultValue={editingConsumer?.owner || currentUser} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none bg-white">{MOCK_DOMAIN_OWNERS.map(owner => <option key={owner} value={owner}>{owner}</option>)}</select></div>
-            <div className="col-span-2"><label className="block text-xs font-semibold text-slate-600 mb-1">网关地址</label><input name="gateway" defaultValue={editingConsumer?.gateway || ''} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-emerald-500 focus:outline-none" placeholder="https://gw.company.com" /></div>
+
           </div>
           <div className="pt-4 flex justify-end space-x-3 border-t border-slate-100">
             <button type="button" onClick={() => setIsConsumerModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">取消</button>
@@ -657,14 +654,13 @@ function ApplyModal() {
   const toggleApi = (apiId) => { if (selectedApis.includes(apiId)) setSelectedApis(selectedApis.filter(id => id !== apiId)); else setSelectedApis([...selectedApis, apiId]); };
   const handleSubmit = (e) => {
     e.preventDefault();
-    const systemAccount = e.target.systemAccount.value;
     if (selectedApis.length === 0) { showToast('请至少选择一个接口能力进行订阅！', 'error'); return; }
     let skipCount = 0; const newReqs = [];
     selectedApis.forEach(apiId => {
       const isExist = relations.some(r => r.apiId === apiId && r.consumerId === applyConsumerId);
       const isPending = requests.some(r => r.apiId === apiId && r.consumerId === applyConsumerId && r.status === '待审批');
       if (isExist || isPending) { skipCount++; } else {
-        newReqs.push({ id: `REQ_${Date.now()}_${Math.random().toString(36).substr(2,4)}`, apiId, consumerId: applyConsumerId, applicant: currentUser, status: '待审批', createTime: new Date().toISOString().split('T')[0], systemAccount, approveTime: '-' });
+        newReqs.push({ id: `REQ_${Date.now()}_${Math.random().toString(36).substr(2,4)}`, apiId, consumerId: applyConsumerId, applicant: currentUser, status: '待审批', createTime: new Date().toISOString().split('T')[0], approveTime: '-' });
       }
     });
     if (newReqs.length > 0) { setRequests(prev => [...newReqs, ...prev]); showToast(`成功提交 ${newReqs.length} 个接口的订阅申请！${skipCount > 0 ? `(${skipCount}个被跳过)` : ''}`); setIsApplyModalOpen(false); }
@@ -679,7 +675,7 @@ function ApplyModal() {
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-5 flex flex-col max-h-[80vh]">
           <div className="bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-600 flex items-center flex-shrink-0"><Box size={16} className="text-slate-400 mr-2 flex-shrink-0"/><span>正在为业务场景 <strong className="text-slate-800">{consumer.scenario} ({consumer.serviceName})</strong> 申请接口。</span></div>
-          <div className="flex-shrink-0"><label className="block text-xs font-semibold text-slate-600 mb-2">申请系统域账号 <span className="text-rose-500">*</span></label><select name="systemAccount" required className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none bg-white shadow-sm cursor-pointer"><option value="">-- 请下拉选择系统域账号 --</option>{MOCK_SYSTEM_ACCOUNTS.map(acc => <option key={acc} value={acc}>{acc}</option>)}</select></div>
+
           <div className="flex-1 overflow-hidden flex flex-col min-h-[300px]">
             <label className="block text-xs font-semibold text-slate-600 mb-2">选择订阅接口 (可多选) <span className="text-rose-500">*</span></label>
             <div className="relative mb-3 flex-shrink-0"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={14} /><input type="text" placeholder="搜索接口名称或地址..." value={apiSearch} onChange={e => setApiSearch(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:border-indigo-500 focus:outline-none shadow-sm" /></div>
@@ -889,7 +885,7 @@ function ApiScenarioDrawerContent() {
         {relatedConsumers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
-              <thead className="bg-white border-b border-slate-100"><tr><th className="px-5 py-3 font-semibold text-slate-600">业务域</th><th className="px-5 py-3 font-semibold text-slate-600">业务场景</th><th className="px-5 py-3 font-semibold text-slate-600">近7天</th><th className="px-5 py-3 font-semibold text-slate-600">近30天</th><th className="px-5 py-3 font-semibold text-slate-600">近90天</th><th className="px-5 py-3 font-semibold text-slate-600">近180天</th><th className="px-5 py-3 font-semibold text-slate-600">应用服务名</th><th className="px-5 py-3 font-semibold text-slate-600">系统域账号</th><th className="px-5 py-3 font-semibold text-slate-600">网关地址</th><th className="px-5 py-3 font-semibold text-slate-600 text-center sticky right-0 bg-white shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.1)]">操作</th></tr></thead>
+              <thead className="bg-white border-b border-slate-100"><tr><th className="px-5 py-3 font-semibold text-slate-600">业务域</th><th className="px-5 py-3 font-semibold text-slate-600">业务场景</th><th className="px-5 py-3 font-semibold text-slate-600">近7天</th><th className="px-5 py-3 font-semibold text-slate-600">近30天</th><th className="px-5 py-3 font-semibold text-slate-600">近90天</th><th className="px-5 py-3 font-semibold text-slate-600">近180天</th><th className="px-5 py-3 font-semibold text-slate-600">应用服务名</th><th className="px-5 py-3 font-semibold text-slate-600 text-center sticky right-0 bg-white shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.1)]">操作</th></tr></thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {relatedConsumers.map(c => {
                   const stats = getConsumerStats(c.id, api.id);
@@ -902,8 +898,6 @@ function ApiScenarioDrawerContent() {
                       <td className="px-5 py-3 text-slate-600 font-mono">{stats.d90.toLocaleString()}</td>
                       <td className="px-5 py-3 text-slate-600 font-mono">{stats.d180.toLocaleString()}</td>
                       <td className="px-5 py-3"><div className="text-xs text-slate-500 font-mono mt-0.5 bg-slate-100 inline-block px-1 rounded">{c.serviceName}</div></td>
-                      <td className="px-5 py-3"><span className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded w-max"><ShieldCheck size={12} className="mr-1"/>{c.systemAccount || '无'}</span></td>
-                      <td className="px-5 py-3 text-slate-600 font-mono text-xs">{c.gateway || '无'}</td>
                       <td className="px-5 py-3 text-center sticky right-0 bg-white group-hover:bg-slate-50 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.1)]"><button type="button" onClick={() => setDetailConsumerId(c.id)} className="text-blue-600 font-medium hover:text-blue-800 hover:underline inline-flex items-center text-sm">调用详情 <ChevronRight size={14} className="ml-0.5" /></button></td>
                     </tr>
                   );
@@ -1134,7 +1128,7 @@ function AppTableView() {
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700 w-40">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">场景负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">系统域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">网关地址</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">能力依赖</th></tr></thead>
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700 w-40">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">场景负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">能力依赖</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedApps.map(app => {
                 const depCount = relations.filter(r => r.consumerId === app.id).length;
@@ -1146,13 +1140,11 @@ function AppTableView() {
                     <td className="px-5 py-4 font-mono text-slate-600 text-xs bg-slate-50 rounded px-2 border border-slate-100">{app.serviceName}</td>
                     <td className="px-5 py-4"><OwnerBadge name={app.domainOwner} /></td>
                     <td className="px-5 py-4"><OwnerBadge name={app.owner} /></td>
-                    <td className="px-5 py-4"><span className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded w-max"><ShieldCheck size={12} className="mr-1"/>{app.systemAccount || '无'}</span></td>
-                    <td className="px-5 py-4 font-mono text-slate-600 text-xs">{app.gateway || '无'}</td>
                     <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-emerald-50/50 border-l border-slate-100 transition-colors z-10"><button type="button" onClick={() => openAppDepsModal(app.id)} className="bg-emerald-100 text-emerald-700 py-1 px-3 rounded-full text-xs font-bold hover:bg-emerald-200 transition-colors" title="点击查看依赖详情">{depCount}</button></td>
                   </tr>
                 );
               })}
-              {paginatedApps.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的业务场景数据</p></td></tr>}
+              {paginatedApps.length === 0 && <tr><td colSpan="7" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的业务场景数据</p></td></tr>}
             </tbody>
           </table>
         </div>
@@ -1255,7 +1247,7 @@ function AppManageView() {
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700 w-40">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名 (Service)</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">场景负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">网关地址</th><th className="px-5 py-3.5 font-semibold text-slate-700">维护时间</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作配置</th></tr></thead>
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700 w-40">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">应用服务名 (Service)</th><th className="px-5 py-3.5 font-semibold text-slate-700">域负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">场景负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">维护时间</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作配置</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedApps.map(app => (
                 <tr key={app.id} className={`hover:bg-emerald-50/50 transition-colors group ${app.enabled === false ? 'opacity-60 grayscale-[50%]' : ''}`}>
@@ -1265,7 +1257,6 @@ function AppManageView() {
                   <td className="px-5 py-4 font-mono text-slate-600 text-xs bg-slate-50 rounded px-2 border border-slate-100">{app.serviceName}</td>
                   <td className="px-5 py-4"><OwnerBadge name={app.domainOwner} /></td>
                   <td className="px-5 py-4"><OwnerBadge name={app.owner} /></td>
-                  <td className="px-5 py-4 text-slate-600 font-mono text-xs">{app.gateway || '无'}</td>
                   <td className="px-5 py-4 text-slate-500 text-xs font-mono">{app.createTime || '2023-01-01'}</td>
                   <td className="px-5 py-4 text-center sticky right-0 bg-white group-hover:bg-emerald-50/50 border-l border-slate-100 transition-colors z-10">
                      <div className="flex justify-center items-center space-x-3">
@@ -1278,7 +1269,7 @@ function AppManageView() {
                   </td>
                 </tr>
               ))}
-              {paginatedApps.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的业务场景记录，请先新增</p></td></tr>}
+              {paginatedApps.length === 0 && <tr><td colSpan="8" className="py-24 text-center text-slate-500"><LayoutGrid size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的业务场景记录，请先新增</p></td></tr>}
             </tbody>
           </table>
         </div>
@@ -1315,7 +1306,7 @@ function RequestManageView() {
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">申请单号</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请订阅接口</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请系统域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请人</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请时间</th><th className="px-5 py-3.5 font-semibold text-slate-700">审批时间</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center">状态</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">申请单号</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请订阅接口</th><th className="px-5 py-3.5 font-semibold text-slate-700">接口负责人</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请业务场景</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请人</th><th className="px-5 py-3.5 font-semibold text-slate-700">申请时间</th><th className="px-5 py-3.5 font-semibold text-slate-700">审批时间</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center">状态</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedReqs.map(req => {
                 const api = apis.find(a => a.id === req.apiId) || { name: '未知', url: '未知' };
@@ -1326,7 +1317,6 @@ function RequestManageView() {
                     <td className="px-5 py-4"><div className="font-medium text-slate-900">{api.name}</div><div className="text-xs text-slate-500 font-mono mt-0.5">{api.url}</div></td>
                     <td className="px-5 py-4"><OwnerBadge name={api.owner} /></td>
                     <td className="px-5 py-4"><div className="flex items-center text-slate-700"><Globe size={14} className="mr-1.5 text-slate-400" /> {consumer.domain} - {consumer.scenario}</div><div className="text-xs text-slate-500 font-mono mt-0.5">{consumer.serviceName}</div></td>
-                    <td className="px-5 py-4"><span className="flex items-center text-indigo-600 font-mono text-xs bg-indigo-50 px-2 py-1 rounded w-max"><ShieldCheck size={12} className="mr-1"/>{req.systemAccount || '无'}</span></td>
                     <td className="px-5 py-4"><OwnerBadge name={req.applicant} /></td>
                     <td className="px-5 py-4 text-slate-500 text-xs font-mono">{req.createTime}</td>
                     <td className="px-5 py-4 text-slate-500 text-xs font-mono">{req.approveTime || '-'}</td>
@@ -1343,7 +1333,7 @@ function RequestManageView() {
                   </tr>
                 );
               })}
-              {paginatedReqs.length === 0 && <tr><td colSpan="10" className="py-24 text-center text-slate-500"><ClipboardList size={48} className="mx-auto mb-4 text-slate-300" /><p>当前分类下暂无申请记录</p></td></tr>}
+              {paginatedReqs.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><ClipboardList size={48} className="mx-auto mb-4 text-slate-300" /><p>当前分类下暂无申请记录</p></td></tr>}
             </tbody>
           </table>
         </div>
@@ -1361,7 +1351,7 @@ function MemberFormModal() {
   if (!isMemberModalOpen) return null;
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = { module: e.target.module.value, domain: e.target.domain.value, account: e.target.account.value, name: e.target.memberName.value, email: e.target.email.value, role: e.target.role.value, remark: e.target.remark.value };
+    const payload = { domain: e.target.domain.value, account: e.target.account.value, name: e.target.memberName.value, email: e.target.email.value, role: e.target.role.value, remark: e.target.remark.value };
     if (editingMember) {
       setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, ...payload } : m));
       showToast('成员信息更新成功！');
@@ -1381,7 +1371,6 @@ function MemberFormModal() {
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-semibold text-slate-600 mb-1">模块 <span className="text-rose-500">*</span></label><select name="module" defaultValue={editingMember?.module || MODULE_ENUMS[0]} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{MODULE_ENUMS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
             <div><label className="block text-xs font-semibold text-slate-600 mb-1">业务域 <span className="text-rose-500">*</span></label><select name="domain" defaultValue={editingMember?.domain || providers[0]?.name} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white">{providers.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
             <div><label className="block text-xs font-semibold text-slate-600 mb-1">域账号 <span className="text-rose-500">*</span></label><input name="account" defaultValue={editingMember?.account || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none" placeholder="例如：sys_algo_01" /></div>
             <div><label className="block text-xs font-semibold text-slate-600 mb-1">姓名 <span className="text-rose-500">*</span></label><input name="memberName" defaultValue={editingMember?.name || ''} required className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="输入姓名" /></div>
@@ -1402,17 +1391,13 @@ function MemberFormModal() {
 function MemberManageView() {
   const { members, setMembers, providers, showToast, confirmDialog, setConfirmDialog } = useContext(AppContext);
   const { isMemberModalOpen, setIsMemberModalOpen, setEditingMember } = useContext(AppContext);
-  const [filterModule, setFilterModule] = useState('');
   const [filterDomain, setFilterDomain] = useState('');
-  const [filterRole, setFilterRole] = useState('');
   const [filterFuzzy, setFilterFuzzy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-  useEffect(() => { setCurrentPage(1); }, [filterModule, filterDomain, filterRole, filterFuzzy]);
+  useEffect(() => { setCurrentPage(1); }, [filterDomain, filterFuzzy]);
   let filteredData = members;
-  if (filterModule) filteredData = filteredData.filter(m => m.module === filterModule);
   if (filterDomain) filteredData = filteredData.filter(m => m.domain === filterDomain);
-  if (filterRole) filteredData = filteredData.filter(m => m.role === filterRole);
   if (filterFuzzy) { const lower = filterFuzzy.toLowerCase(); filteredData = filteredData.filter(m => (m.account && m.account.toLowerCase().includes(lower)) || (m.name && m.name.toLowerCase().includes(lower)) || (m.email && m.email.toLowerCase().includes(lower)) || (m.remark && m.remark.toLowerCase().includes(lower))); }
   const totalItems = filteredData.length;
   const safePage = Math.min(Math.max(currentPage, 1), Math.ceil(totalItems / pageSize) || 1);
@@ -1423,30 +1408,29 @@ function MemberManageView() {
     setConfirmDialog({ isOpen: true, title: '删除成员', message: `确定要删除成员「${member.name}」（${member.id}）吗？此操作不可恢复。`, onConfirm: () => { setMembers(prev => prev.filter(m => m.id !== member.id)); showToast('成员已成功删除！'); } });
   };
   const roleBadgeStyle = (role) => {
-    const styles = { '管理员': 'bg-indigo-50 text-indigo-700 border-indigo-200', '开发者': 'bg-blue-50 text-blue-700 border-blue-200', '审批人': 'bg-emerald-50 text-emerald-700 border-emerald-200', '观察者': 'bg-slate-100 text-slate-600 border-slate-200' };
+    const styles = { '管理员': 'bg-indigo-50 text-indigo-700 border-indigo-200', '开发者': 'bg-blue-50 text-blue-700 border-blue-200' };
     return styles[role] || 'bg-slate-100 text-slate-600 border-slate-200';
   };
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in duration-300 bg-slate-50/50">
       <div className="mb-4 flex items-center justify-between">
-        <div><h1 className="text-xl font-bold text-slate-800">成员管理</h1><p className="text-sm text-slate-500 mt-1">管理各模块的业务域成员信息，支持增删改查</p></div>
-        <button type="button" onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 flex items-center transition-colors"><Plus size={16} className="mr-2"/> 新增成员</button>
+        <div className="flex items-center space-x-4">
+          <div><h1 className="text-xl font-bold text-slate-800">成员管理</h1><p className="text-sm text-slate-500 mt-1">管理各业务域成员信息，支持增删改查</p></div>
+          <select className="bg-white border-2 border-blue-300 text-sm outline-none text-slate-700 w-44 px-3 py-2 rounded-lg cursor-pointer font-semibold shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}><option value="">全部业务域</option>{domainNames.map(d => <option key={d} value={d}>{d}</option>)}</select>
+        </div>
       </div>
       <div className="mb-4 flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-        <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="模糊搜索域账号、姓名、邮箱、备注..." className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm transition-all outline-none" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
-        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-40 px-3 py-1.5 rounded-md cursor-pointer" value={filterModule} onChange={(e) => setFilterModule(e.target.value)}><option value="">全部模块</option>{MODULE_ENUMS.map(m => <option key={m} value={m}>{m}</option>)}</select>
-        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}><option value="">全部业务域</option>{domainNames.map(d => <option key={d} value={d}>{d}</option>)}</select>
-        <select className="bg-slate-50 border border-slate-200 text-sm outline-none text-slate-700 w-32 px-3 py-1.5 rounded-md cursor-pointer" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}><option value="">全部角色</option>{ROLE_ENUMS.map(r => <option key={r} value={r}>{r}</option>)}</select>
+        <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} /><input type="text" placeholder="搜索域账号、姓名、邮箱、备注..." className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm transition-all outline-none" value={filterFuzzy} onChange={(e) => setFilterFuzzy(e.target.value)} /></div>
+        <button type="button" onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 flex items-center transition-colors whitespace-nowrap"><Plus size={16} className="mr-2"/> 新增成员</button>
       </div>
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">模块</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">姓名</th><th className="px-5 py-3.5 font-semibold text-slate-700">邮箱</th><th className="px-5 py-3.5 font-semibold text-slate-700">角色</th><th className="px-5 py-3.5 font-semibold text-slate-700">备注</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"><tr><th className="px-5 py-3.5 font-semibold text-slate-700">ID</th><th className="px-5 py-3.5 font-semibold text-slate-700">业务域</th><th className="px-5 py-3.5 font-semibold text-slate-700">域账号</th><th className="px-5 py-3.5 font-semibold text-slate-700">姓名</th><th className="px-5 py-3.5 font-semibold text-slate-700">邮箱</th><th className="px-5 py-3.5 font-semibold text-slate-700">角色</th><th className="px-5 py-3.5 font-semibold text-slate-700">备注</th><th className="px-5 py-3.5 font-semibold text-slate-700 text-center sticky right-0 bg-slate-50 border-l border-slate-200 z-20">操作</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedData.map(mem => (
                 <tr key={mem.id} className="hover:bg-slate-50/80 transition-colors group">
                   <td className="px-5 py-4 font-mono text-slate-500 text-xs">{mem.id}</td>
-                  <td className="px-5 py-4"><span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">{mem.module}</span></td>
                   <td className="px-5 py-4 font-medium text-slate-800">{mem.domain}</td>
                   <td className="px-5 py-4 font-mono text-slate-600 text-xs">{mem.account}</td>
                   <td className="px-5 py-4"><OwnerBadge name={mem.name} /></td>
@@ -1462,7 +1446,7 @@ function MemberManageView() {
                   </td>
                 </tr>
               ))}
-              {paginatedData.length === 0 && <tr><td colSpan="9" className="py-24 text-center text-slate-500"><Users size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的成员数据</p></td></tr>}
+              {paginatedData.length === 0 && <tr><td colSpan="8" className="py-24 text-center text-slate-500"><Users size={48} className="mx-auto mb-4 text-slate-300" /><p>未找到匹配的成员数据</p></td></tr>}
             </tbody>
           </table>
         </div>
